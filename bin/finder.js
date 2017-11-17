@@ -49,9 +49,9 @@ Finder.find = function find(dir, regx) {
 
     let {path} = queue.shift();
 
-    console.log(path + dirsep);
+    console.log("'" + path + dirsep + "'");
 
-    let files = fs.readdirSync(path);
+    let files = fs.readdirSync( path );
 
     files.forEach(file => {
       try {
@@ -64,7 +64,7 @@ Finder.find = function find(dir, regx) {
         /* BFS: Enqueue directories for processing later on. */
         if (stats.isDirectory()) {
           queue.unshift(item);
-          console.log("  > " + item.path + dirsep);
+          console.log("  > '" + item.path + dirsep + "'");
           return;
         }
         /* We're _not_ following symlinks at the moment.
@@ -72,7 +72,7 @@ Finder.find = function find(dir, regx) {
         else if (stats.isSymbolicLink()) {
           try {
             const target = fs.readlinkSync(item.path);
-            console.log("Symlink '" + item.path + "': " + target);
+            console.log("Symlink '" + item.path + "': '" + target + "'");
           } catch(ex) {
             console.log("ERROR: Couldn't read symlink '" + item.path + "',");
             console.log("     ` RE-THROWING EXCEPTION: " + ex);
@@ -82,8 +82,10 @@ Finder.find = function find(dir, regx) {
         }
         /* Skip sockets, devices, or whatever else */
         else if (!stats.isFile()) {
+          console.log("SKIPPING NON-FILE: '" + item.path + "'");
           return;
         }
+        /* Skip files that do not match the regular expression. */
         else if (!regx.test(file)) {
             return;
         }
@@ -92,7 +94,7 @@ Finder.find = function find(dir, regx) {
 
         //console.log(item.path +' ('+ item.stats.size +')' );
       } catch(ex) {
-        console.log("ERROR: Couldn't stat()" + ex);
+        console.log("ERROR: Couldn't stat() something. Exception caugth: " + ex);
         return;
       }
     });
@@ -100,7 +102,7 @@ Finder.find = function find(dir, regx) {
   }
 
   console.log("END: find('" + dir + "', " + regx + ").");
-  console.log("   ` Got " + collect.length + " files.");
+  console.log("     Got " + collect.length + " files.");
 
   return collect;
 } // find().
