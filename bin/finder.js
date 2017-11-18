@@ -50,7 +50,8 @@ Finder.find = function find(dir, regx) {
 
     let {path} = queue.shift();
 
-    cli.info("'" + path + dirsep + "'");
+    // cli.info("'" + path + dirsep + "'");
+    process.stderr.write("\r'" + path + dirsep + "'");
 
     let files = null;
 
@@ -74,7 +75,7 @@ Finder.find = function find(dir, regx) {
         /* BFS: Enqueue directories for processing later on. */
         if (stats.isDirectory()) {
           queue.unshift(item);
-          cli.info("  > '" + item.path + dirsep + "'");
+          //cli.info("  > '" + item.path + dirsep + "'");
           return;
         }
         /* We're _not_ following symlinks at the moment.
@@ -111,6 +112,7 @@ Finder.find = function find(dir, regx) {
 
   }
 
+  process.stdout.write("\n");
   cli.ok("END: find('" + dir + "', " + regx + ").");
   cli.ok("     Got " + collect.length + " files.");
 

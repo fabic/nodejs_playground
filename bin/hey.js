@@ -2,6 +2,7 @@
 
 'use strict';
 
+let assert = require('assert');
 let cli = require('cli');
 let Finder = require('./finder.js');
 
@@ -46,26 +47,36 @@ if (cli.command == 'find') {
 }
 // HASH
 else if (cli.command == 'hash') {
-  let currentSet = [];
-  let currentSize = null;
-  for (let i=0; i<files.length; i++) {
+  // todo: if files not empty...
+  assert(files.length > 0, "TODO: dude -_- wtf ?");
+
+  let currentSet = [ files[0] ];
+  let currentSize = files[0].stats.size;
+
+  for (let i=1; i<files.length; i++) {
     const file = files[i];
 
+    // Collect consecutive files with same size.
     if (file.stats.size == currentSize) {
       currentSet.push( file );
       continue;
     }
 
-    // ( Else: )
+    //
+    // Else => we've got one file(s) set => process it.
+    //
 
+    // MAINT.: Code guard for futur maintenance on this non-trivial loop.
+    //         (i.e. current file(s) set may not be empty).
     if (currentSet.length == 0) {
-      cli.error('Huh!');
-      currentSet.push( file );
-      currentSize = file.stats.size;
+      assert.fail(currentSet.length, 0, "Can't be!", '>'); // would throw ex.!
+      break;
     }
+    // Silently skip lone files (unique size).
     else if (currentSet.length == 1) {
       process.stderr.write('.');
     }
+    // Actual files set processing.
     else {
       cli.info("Got one same-size set with " + currentSet.length + " files.");
       currentSet.forEach(({path, stats}) => {
@@ -73,8 +84,9 @@ else if (cli.command == 'hash') {
       });
     }
 
-    // Rewind so that we start over with an empty files set.
-    //i--;
+    // ^ done processing current files set.
+
+    // Start over with a fresh file set.
     currentSize = file.stats.size;
     currentSet = [ file ];
   }
