@@ -7,6 +7,7 @@
 
 'use strict';
 
+let cli = require('cli');
 let fs = require('fs');
 const { sep: dirsep } = require('path');
 
@@ -41,7 +42,7 @@ Finder.find = function find(dir, regx) {
   let queue = [];
   let collect = [];
 
-  console.log("BEGIN: find('" + dir + "', " + regx + ").");
+  cli.info("BEGIN: find('" + dir + "', " + regx + ").");
 
   queue.unshift({path: dir});
 
@@ -49,9 +50,18 @@ Finder.find = function find(dir, regx) {
 
     let {path} = queue.shift();
 
-    console.log("'" + path + dirsep + "'");
+    cli.info("'" + path + dirsep + "'");
 
-    let files = fs.readdirSync( path );
+    let files = null;
+
+    try {
+      files = fs.readdirSync( path );
+    }
+    catch(ex) {
+      cli.error("Could not read directory contents of '" + path + "': "
+        + ex);
+      continue;
+    }
 
     files.forEach(file => {
       try {
@@ -64,7 +74,7 @@ Finder.find = function find(dir, regx) {
         /* BFS: Enqueue directories for processing later on. */
         if (stats.isDirectory()) {
           queue.unshift(item);
-          console.log("  > '" + item.path + dirsep + "'");
+          cli.info("  > '" + item.path + dirsep + "'");
           return;
         }
         /* We're _not_ following symlinks at the moment.
@@ -72,17 +82,17 @@ Finder.find = function find(dir, regx) {
         else if (stats.isSymbolicLink()) {
           try {
             const target = fs.readlinkSync(item.path);
-            console.log("Symlink '" + item.path + "': '" + target + "'");
+            cli.info("Symlink '" + item.path + "': '" + target + "'");
           } catch(ex) {
-            console.log("ERROR: Couldn't read symlink '" + item.path + "',");
-            console.log("     ` RE-THROWING EXCEPTION: " + ex);
+            cli.error("ERROR: Couldn't read symlink '" + item.path + "',");
+            cli.error("     ` RE-THROWING EXCEPTION: " + ex);
             throw ex;
           }
           return;
         }
         /* Skip sockets, devices, or whatever else */
         else if (!stats.isFile()) {
-          console.log("SKIPPING NON-FILE: '" + item.path + "'");
+          cli.info("SKIPPING NON-FILE: '" + item.path + "'");
           return;
         }
         /* Skip files that do not match the regular expression. */
@@ -94,15 +104,15 @@ Finder.find = function find(dir, regx) {
 
         //console.log(item.path +' ('+ item.stats.size +')' );
       } catch(ex) {
-        console.log("ERROR: Couldn't stat() something. Exception caugth: " + ex);
+        cli.error("ERROR: Couldn't stat() something. Exception caugth: " + ex);
         return;
       }
     });
 
   }
 
-  console.log("END: find('" + dir + "', " + regx + ").");
-  console.log("     Got " + collect.length + " files.");
+  cli.ok("END: find('" + dir + "', " + regx + ").");
+  cli.ok("     Got " + collect.length + " files.");
 
   return collect;
 } // find().
