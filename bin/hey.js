@@ -2,12 +2,10 @@
 
 'use strict';
 
-console.log("Hey!");
-
 let cli = require('cli');
 let Finder = require('./finder.js');
 
-cli.info("HEY!");
+cli.info("Hey!");
 cli.enable('status');
 cli.parse({
   file: [ 'f', 'A file to process', 'file', null ],
@@ -16,19 +14,19 @@ cli.parse({
   regx: [ 'r', 'Regular expression', 'string', 'TODO' ],
 }, ['find', 'encode']);
 
-console.log(cli.args);
-console.log(cli.command);
-console.log(cli.options);
+//console.log(cli.args);
+//console.log(cli.command);
+//console.log(cli.options);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 // const rootdir = "/mnt/nfs/wolf/papa/-- 10 -- MES RUSHS -- 990 GO";
 // const rootdir = "/mnt/nfs/wolf/papa";
-const rootdir = "/home/fabi/Downloads";
+const rootdir = cli.args[0] || "/home/fabi/Downloads";
 
 let files = Finder.find(rootdir, /\.(avi|divx|dv|flv|ogm|mkv|mov|mp4|mpeg|mpg|xvid|webm)$/);
 
-console.log("Got " + files.length + " files. Sorting by size now.");
+cli.info("Got " + files.length + " files. Sorting by size now.");
 
 // Sort files by size (and file path).
 files.sort((item1, item2) => {
@@ -39,11 +37,11 @@ files.sort((item1, item2) => {
 });
 
 files.forEach(({path, stats}) => {
-  console.log(stats.nlink +' '+ stats.size + ' ' + path);
+  cli.info(stats.nlink +' '+ stats.size + ' ' + path);
 });
 
-console.log("# <hardlinks count>  <file size>  <file path name>");
-console.log("Got " + files.length + " files. Sorted by size.");
+cli.info("# <hardlinks count>  <file size>  <file path name>");
+cli.info("Got " + files.length + " files. Sorted by size.");
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -51,7 +49,7 @@ if (cli.command == 'encode') {
   const proc = require('child_process');
 
   files.forEach(({path, stats}) => {
-    console.log(stats.nlink +' '+ stats.size + ' ' + path);
+    cli.info(stats.nlink +' '+ stats.size + ' ' + path);
     let args = [];
     let options = {
       stdio: [process.stdin, process.stdout, process.stderr],
@@ -59,3 +57,5 @@ if (cli.command == 'encode') {
     proc.spawnSync('ffmpeg', args, options);
   });
 }
+
+cli.info('Bye ;-');
