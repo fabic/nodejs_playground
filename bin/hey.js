@@ -108,10 +108,26 @@ const rootdir = cli.args[0] || "/home/fabi/Downloads";
 
 let { files, subsets } = Dedup.find(rootdir, /\.(avi|divx|dv|flv|ogm|mkv|mov|mp4|mpeg|mpg|xvid|webm)$/);
 
+const crypto = require('crypto');
+const fs     = require('fs');
+
 subsets.forEach(set => {
       cli.info("Got one same-size set with " + set.length + " files.");
+
+      const bufferSize = 4096;
+      const buffer = Buffer.alloc( bufferSize );
+
       set.forEach(({path, stats}) => {
-        cli.info("  > " + stats.nlink +' '+ stats.size + ' ' + path);
+        const fd = fs.openSync(path, 'r');
+        const nbytes = fs.readSync(fd, buffer, /* buf. offset */ 0, buffer.length, /* offset in file */ 0);
+
+        const hash = crypto.createHash('sha256');
+        hash.update( buffer );
+        let hash_1 = hash.digest('hex');
+
+        fs.closeSync( fd );
+
+        cli.info("  > " + hash_1 +' '+ stats.nlink +' '+ stats.size + ' ' + path);
       });
 });
 
