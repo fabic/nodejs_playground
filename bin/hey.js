@@ -21,37 +21,45 @@ cli.parse({
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-// const rootdir = "/mnt/nfs/wolf/papa/-- 10 -- MES RUSHS -- 990 GO";
-// const rootdir = "/mnt/nfs/wolf/papa";
-const rootdir = cli.args[0] || "/home/fabi/Downloads";
 
-let files = Finder.find(rootdir, /\.(avi|divx|dv|flv|ogm|mkv|mov|mp4|mpeg|mpg|xvid|webm)$/);
+function Dedup() {
+  if ( ! (this instanceof Dedup) ) {
+    return new Dedup();
+  }
+}
 
-cli.info("Got " + files.length + " files. Sorting by size now.");
+Dedup.find = function _dedup_find(dir, regx) {
+  let files = Finder.find(rootdir, regx);
 
-// Sort files by size (and file path).
-files.sort((item1, item2) => {
-  let sz = item1.stats.size - item2.stats.size;
-  return sz != 0 ? sz : (
+  //cli.info("Got " + files.length + " files. Sorting by size now.");
+
+  // Sort files by size (and file path).
+  files.sort((item1, item2) => {
+    let sz = item1.stats.size - item2.stats.size;
+    return sz != 0 ? sz : (
       item1.path.localeCompare(item2.path)
-    );
-});
+      );
+  });
 
 /// FIND ONLY
-if (cli.command == 'find') {
-  files.forEach(({path, stats}) => {
-    console.log(stats.nlink +' '+ stats.size + ' ' + path);
-  });
-  console.log("# <hardlinks count>  <file size>  <file path name>");
-  console.log("Got " + files.length + " files. Sorted by size.");
-}
+// if (cli.command == 'find') {
+//   files.forEach(({path, stats}) => {
+//     console.log(stats.nlink +' '+ stats.size + ' ' + path);
+//   });
+//   console.log("# <hardlinks count>  <file size>  <file path name>");
+//   console.log("Got " + files.length + " files. Sorted by size.");
+// }
 // HASH
-else if (cli.command == 'hash') {
+// else if (cli.command == 'hash') {
+
+  // Partition the set of files into subsets of files that have the same size.
+
   // todo: if files not empty...
   assert(files.length > 0, "TODO: dude -_- wtf ?");
 
   let currentSet = [ files[0] ];
   let currentSize = files[0].stats.size;
+  let subsets = []; // output val.
 
   for (let i=1; i<files.length; i++) {
     const file = files[i];
@@ -63,7 +71,7 @@ else if (cli.command == 'hash') {
     }
 
     //
-    // Else => we've got one file(s) set => process it.
+    // (else {...}) => we've got one file(s) set => process it.
     //
 
     // MAINT.: Code guard for futur maintenance on this non-trivial loop.
@@ -74,14 +82,11 @@ else if (cli.command == 'hash') {
     }
     // Silently skip lone files (unique size).
     else if (currentSet.length == 1) {
-      process.stderr.write('.');
+      /* noop */ ;
     }
     // Actual files set processing.
     else {
-      cli.info("Got one same-size set with " + currentSet.length + " files.");
-      currentSet.forEach(({path, stats}) => {
-        cli.info("  > " + stats.nlink +' '+ stats.size + ' ' + path);
-      });
+      subsets.push( currentSet );
     }
 
     // ^ done processing current files set.
@@ -89,8 +94,26 @@ else if (cli.command == 'hash') {
     // Start over with a fresh file set.
     currentSize = file.stats.size;
     currentSet = [ file ];
-  }
-} // if hash //
+  } // files set iter. //
+
+  return {
+    files,
+    subsets
+  };
+} // _dedup_find() //
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+const rootdir = cli.args[0] || "/home/fabi/Downloads";
+
+let { files, subsets } = Dedup.find(rootdir, /\.(avi|divx|dv|flv|ogm|mkv|mov|mp4|mpeg|mpg|xvid|webm)$/);
+
+subsets.forEach(set => {
+      cli.info("Got one same-size set with " + set.length + " files.");
+      set.forEach(({path, stats}) => {
+        cli.info("  > " + stats.nlink +' '+ stats.size + ' ' + path);
+      });
+});
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
