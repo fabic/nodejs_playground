@@ -1,0 +1,3 @@
+[submodule "apostrophe-cms-js"]
+	path = apostrophe-cms
+	url = git@github.com:apostrophecms/apostrophe.git
