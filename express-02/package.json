@@ -12,6 +12,9 @@
     "express": "~4.15.5",
     "morgan": "~1.9.0",
     "node-sass-middleware": "0.9.8",
+    "nunjucks": "^3.0.1",
+    "pg-promise": "^7.4.0",
+    "phantom": "^4.0.12",
     "serve-favicon": "~2.4.5",
     "twig": "~0.10.3"
   }

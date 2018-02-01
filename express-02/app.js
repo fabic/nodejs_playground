@@ -1,19 +1,32 @@
-var express = require('express');
-var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
+var express        = require('express');
+var path           = require('path');
+var favicon        = require('serve-favicon');
+var logger         = require('morgan');
+var cookieParser   = require('cookie-parser');
+var bodyParser     = require('body-parser');
 var sassMiddleware = require('node-sass-middleware');
-
-var index = require('./routes/index');
-var users = require('./routes/users');
+var nunjucks       = require('nunjucks');
 
 var app = express();
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'twig');
+if (false) {
+  app.set('views', path.join(__dirname, 'views'));
+  app.set('view engine', 'twig');
+}
+else {
+  // https://mozilla.github.io/nunjucks/getting-started.html
+  // https://mozilla.github.io/nunjucks/api.html#configure
+  nunjucks.configure('views', {
+      autoescape: true,
+      // TODO: install dep. 'chokidar' for watch/autoreload ability.
+      //watch: true,
+      // ^ meanwhile we disabled caching for dev. purposes.
+      noCache: true,
+      express: app
+  });
+  app.set('view engine', 'nunjucks');
+}
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
@@ -27,10 +40,16 @@ app.use(sassMiddleware({
   indentedSyntax: true, // true = .sass and false = .scss
   sourceMap: true
 }));
+
 app.use(express.static(path.join(__dirname, 'public')));
+
+var index = require('./routes/index');
+var users = require('./routes/users');
+var pgsql = require('./routes/pgsql');
 
 app.use('/', index);
 app.use('/users', users);
+app.use('/pg', pgsql);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
