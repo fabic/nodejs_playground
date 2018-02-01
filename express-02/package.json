@@ -3,9 +3,14 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "build": "babel src/ -d dist/",
+    "prepublish": "npm run build",
+    "flow": "flow",
+    "start": "node --harmony dist/bin/run-web-app.shebang.js"
   },
   "dependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-flow": "^6.23.0",
     "body-parser": "~1.18.2",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
@@ -15,7 +20,10 @@
     "nunjucks": "^3.0.1",
     "pg-promise": "^7.4.0",
     "phantom": "^4.0.12",
-    "serve-favicon": "~2.4.5",
-    "twig": "~0.10.3"
+    "serve-favicon": "~2.4.5"
+  },
+  "devDependencies": {
+    "babel-register": "^6.26.0",
+    "flow-bin": "^0.64.0"
   }
 }
