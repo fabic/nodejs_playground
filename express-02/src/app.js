@@ -1,11 +1,11 @@
-import express        from "express"
-import path           from "path"
-import favicon        from "serve-favicon"
-import logger         from "morgan"
-import cookieParser   from "cookie-parser"
-import bodyParser     from "body-parser"
-import sassMiddleware from "node-sass-middleware"
-import nunjucks       from "nunjucks"
+let express        = require('express');
+let path           = require('path');
+let favicon        = require('serve-favicon');
+let logger         = require('morgan');
+let cookieParser   = require('cookie-parser');
+let bodyParser     = require('body-parser');
+let sassMiddleware = require('node-sass-middleware');
+let nunjucks       = require('nunjucks');
 
 let app = express();
 
@@ -40,11 +40,13 @@ app.use(express.static(path.join(__dirname, "public")));
 let index = require("./routes/index");
 let users = require("./routes/users");
 let pgsql = require("./routes/pgsql");
-let phantompdf = require("./routes/phantom-pdf");
 
 app.use("/", index);
 app.use("/users", users);
 app.use("/pg", pgsql);
+
+let phantompdf = require("./routes/phantom-pdf");
+app.use("/pdf", phantompdf);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
