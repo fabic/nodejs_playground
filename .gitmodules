@@ -4,3 +4,6 @@
 [submodule "vuejs-webpack-pwa"]
 	path = tmpl-vuejs-webpack-pwa
 	url = git@github.com:fabic/vuejs-webpack-pwa.git
+[submodule "react-redux-universal-hot-example"]
+	path = react-redux-universal-hot-example
+	url = git@github.com:bertho-zero/react-redux-universal-hot-example.git

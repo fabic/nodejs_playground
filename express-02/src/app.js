@@ -45,8 +45,7 @@ app.use("/", index);
 app.use("/users", users);
 app.use("/pg", pgsql);
 
-let phantompdf = require("./routes/phantom-pdf");
-app.use("/pdf", phantompdf);
+let phantom = require("./phantom/index")(app, '/pdf');
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
