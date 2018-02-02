@@ -29,6 +29,7 @@ const webpackConfig = process.env.NODE_ENV === 'testing'
 
 const app = express( feathers() )
 
+app.set('app.root_dir', path.join(__dirname, '..', '..') )
 // Load app configuration
 app.configure(configuration())
 
@@ -68,8 +69,8 @@ function SetupNunjucksTemplatingEngine (app) {
 }
 
 function SetupExpressRoutes(app) {
-  let index = require('./routes/index')
-  app.use('/_', index)
+  app.use('/_', require('./routes/index'))
+  require('./other/phantom')(app, '/_/pdf')
 }
 
 SetupNunjucksTemplatingEngine( app )

@@ -5,17 +5,15 @@
   "author": "Fabien Cadet <cadet.fabien@gmail.com>",
   "private": true,
   "scripts": {
-    "dev":   "node src/server/app.js",
+    "dev": "node src/server/app.js",
     "start": "node src/server/app.js",
     "build": "node build/build.js",
-    "unit":  "cross-env BABEL_ENV=test karma start test/unit/karma.conf.js --single-run",
-    "e2e":   "node test/e2e/runner.js",
-    "test":  "npm run unit && npm run e2e",
-    "lint":  "eslint --ext .js,.vue src test/unit/specs test/e2e/specs"
+    "unit": "cross-env BABEL_ENV=test karma start test/unit/karma.conf.js --single-run",
+    "e2e": "node test/e2e/runner.js",
+    "test": "npm run unit && npm run e2e",
+    "lint": "eslint --ext .js,.vue src test/unit/specs test/e2e/specs"
   },
   "dependencies": {
-    "vue": "^2.5.2",
-    "vue-router": "^3.0.1",
     "@feathersjs/configuration": "^1.0.2",
     "@feathersjs/errors": "^3.2.1",
     "@feathersjs/express": "^1.1.2",
@@ -24,9 +22,12 @@
     "compression": "^1.7.1",
     "cors": "^2.8.4",
     "helmet": "^3.9.0",
+    "nunjucks": "^3.0.1",
+    "phantom": "^4.0.12",
     "serve-favicon": "^2.4.5",
-    "winston": "^2.4.0",
-    "nunjucks": "^3.0.1"
+    "vue": "^2.5.2",
+    "vue-router": "^3.0.1",
+    "winston": "^2.4.0"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.5",
