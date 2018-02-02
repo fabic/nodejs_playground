@@ -1,6 +1,6 @@
 'use strict'
 
-require('../build/check-versions')()
+require('../../build/check-versions')()
 
 const path          = require('path')
 const express       = require('@feathersjs/express')
@@ -18,14 +18,14 @@ const opn             = require('opn')
 const webpack         = require('webpack')
 const proxyMiddleware = require('http-proxy-middleware')
 
-const config = require('../config')
+const config = require('../../config')
 if (!process.env.NODE_ENV) {
   process.env.NODE_ENV = JSON.parse(config.dev.env.NODE_ENV)
 }
 
 const webpackConfig = process.env.NODE_ENV === 'testing'
-  ? require('../build/webpack.prod.conf')
-  : require('../build/webpack.dev.conf')
+  ? require('../../build/webpack.prod.conf')
+  : require('../../build/webpack.dev.conf')
 
 const app = express( feathers() )
 
@@ -41,6 +41,40 @@ app.use(express.urlencoded({ extended: true }))
 
 app.use(favicon(path.join(app.get('public'), 'favicon.ico')))
 
+/*
+ * Nunjucks view engine setup.
+ *
+ * https://mozilla.github.io/nunjucks/getting-started.html
+ * https://mozilla.github.io/nunjucks/api.html#configure
+ *
+ * @param {Express} app
+ * @constructor
+ */
+function SetupNunjucksTemplatingEngine (app) {
+  let nunjucks = require('nunjucks')
+  let path     = require('path')
+
+  // nunjucks.configure(path.join(__dirname, 'views'), {
+  nunjucks.configure('views', {
+    autoescape: true,
+    // TODO: install dep. "chokidar" for watch/autoreload ability.
+    // watch: true,
+    // ^ meanwhile we disabled caching for dev. purposes.
+    noCache: true,
+    express: app
+  })
+
+  app.set('view engine', 'nunjucks')
+}
+
+function SetupExpressRoutes(app) {
+  let index = require('./routes/index')
+  app.use('/_', index)
+}
+
+SetupNunjucksTemplatingEngine( app )
+SetupExpressRoutes( app )
+
 // default port where dev server listens for incoming traffic
 const port = process.env.PORT || config.dev.port
 // automatically open browser, if not set will be false
@@ -50,7 +84,7 @@ const autoOpenBrowser = !!config.dev.autoOpenBrowser
 const proxyTable = config.dev.proxyTable
 
 if (false) {
-  let serverside = require('../src/server/index')(app)
+  let serverside = require('../../src/server/index')(app)
 }
 
 const compiler = webpack(webpackConfig)
@@ -91,22 +125,21 @@ app.use(require('connect-history-api-fallback')())
 // serve webpack bundle output
 app.use(devMiddleware)
 
-
 // Set up Plugins and providers
 app.configure(express.rest())
 app.configure(socketio())
 
-const middleware = require('../src/middleware')
-const services   = require('../src/services')
-const appHooks   = require('../src/app.hooks')
-const channels   = require('../src/channels')
-
 // Configure other middleware (see `middleware/index.js`)
-app.configure(middleware);
+const middleware = require('./middleware')
+app.configure(middleware)
+
 // Set up our services (see `services/index.js`)
-app.configure(services);
+const services = require('./services')
+app.configure(services)
+
 // Set up event channels (see channels.js)
-app.configure(channels);
+const channels = require('./channels')
+app.configure(channels)
 
 // serve pure static assets
 const staticPath = path.posix.join(config.dev.assetsPublicPath, config.dev.assetsSubDirectory)
@@ -119,6 +152,7 @@ app.use('/', express.static(app.get('public')))
 app.use(express.notFound())
 app.use(express.errorHandler({ logger }))
 
+const appHooks = require('./app.hooks')
 app.hooks(appHooks)
 
 // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
@@ -140,7 +174,16 @@ devMiddleware.waitUntilValid(() => {
   _resolve()
 })
 
+/* eslint-disable no-console */
 const server = app.listen(port)
+
+process.on('unhandledRejection', (reason, p) =>
+  logger.error('Unhandled Rejection at: Promise ', p, reason)
+)
+
+server.on('listening', () =>
+  logger.info('Feathers application started on http://%s:%d', app.get('host'), port)
+)
 
 // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 

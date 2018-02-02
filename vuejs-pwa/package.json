@@ -5,13 +5,13 @@
   "author": "Fabien Cadet <cadet.fabien@gmail.com>",
   "private": true,
   "scripts": {
-    "dev": "node src/app.js",
-    "start": "node src/app.js",
+    "dev":   "node src/server/app.js",
+    "start": "node src/server/app.js",
     "build": "node build/build.js",
-    "unit": "cross-env BABEL_ENV=test karma start test/unit/karma.conf.js --single-run",
-    "e2e": "node test/e2e/runner.js",
-    "test": "npm run unit && npm run e2e",
-    "lint": "eslint --ext .js,.vue src test/unit/specs test/e2e/specs"
+    "unit":  "cross-env BABEL_ENV=test karma start test/unit/karma.conf.js --single-run",
+    "e2e":   "node test/e2e/runner.js",
+    "test":  "npm run unit && npm run e2e",
+    "lint":  "eslint --ext .js,.vue src test/unit/specs test/e2e/specs"
   },
   "dependencies": {
     "vue": "^2.5.2",
