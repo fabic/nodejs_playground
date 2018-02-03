@@ -14,14 +14,14 @@ class Phantom {
     console.info('ich bin Phantom !')
   }
 
-  async Render () {
+  async Render (url) {
     let pdfFileName = 'export.pdf'
 
     const instance = await this.phantom.create()
     const page     = await instance.createPage()
 
-    await page.property('viewportSize', { width: 1024, height: 600 })
-    const status = await page.open('http://fabic.net/about/')
+    await page.property('viewportSize', { width: 1280, height: 1024 })
+    const status = await page.open(url)
     console.log(`Page opened with status [${status}].`)
 
     await page.render(pdfFileName)
@@ -36,9 +36,13 @@ class Phantom {
     let router = require('express').Router()
 
     /* GET home page. */
-    router.get('/', function(req, res, next) {
-      req.app.get('phantom')
-        .Render()
+    router.get(/^.*$/, function(req, res, next) {
+      let app = req.app
+      let phantom = app.get('phantom')
+      let url = req.url.substr(1)
+      console.log(url)
+      phantom
+        .Render(url)
         .then((pdfFileName) => {
           console.log(pdfFileName)
           // res.attachment(pdfFileName)
