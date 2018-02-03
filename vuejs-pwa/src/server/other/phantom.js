@@ -14,8 +14,8 @@ class Phantom {
     console.info('ich bin Phantom !')
   }
 
-  async Render (url) {
-    let pdfFileName = 'export.pdf'
+  async Render (url, pdfFileName) {
+    pdfFileName = pdfFileName || 'export.pdf'
 
     const instance = await this.phantom.create()
     const page     = await instance.createPage()
@@ -40,9 +40,40 @@ class Phantom {
       let app = req.app
       let phantom = app.get('phantom')
       let url = req.url.substr(1)
-      console.log(url)
+
+      let fileName = req.query.fn || url
+
+      fileName = fileName.replace(
+        /(https?:\/\/|[^A-Za-z0-9_.])/g,
+        function (match, m1, offset, string) {
+          return '_'
+        })
+
+      if (!fileName.endsWith('.pdf')) {
+        fileName += '.pdf'
+      }
+
+      console.log(url, fileName)
+
+      // Check for error conditions.
+      // Min. URL would be 'http://x.y'
+      if (url.length < 10) {
+        res.render('phantom.html.njk', {
+          title: 'Huh!',
+          error: `Invalid URL: ${url}`
+        })
+      }
+      // Min. file name would be for ex. 'x.pdf'
+      else if (fileName.length < 5) {
+        res.render('phantom.html.njk', {
+          title: 'Huh!',
+          error: `Invalid file name: ${fileName}`
+        })
+      }
+
+      // todo: filter out QS arg. fn=... from URL.
       phantom
-        .Render(url)
+        .Render(url, fileName)
         .then((pdfFileName) => {
           console.log(pdfFileName)
           // res.attachment(pdfFileName)
