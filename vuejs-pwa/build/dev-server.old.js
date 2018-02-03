@@ -2,6 +2,12 @@
 
 require('./check-versions')()
 
+
+/////
+// TODO: REMOVE THIS, replace by src/server/app.js
+/////
+
+
 const config = require('../config')
 if (!process.env.NODE_ENV) {
   process.env.NODE_ENV = JSON.parse(config.dev.env.NODE_ENV)

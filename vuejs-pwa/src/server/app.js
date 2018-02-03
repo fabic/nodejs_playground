@@ -1,3 +1,9 @@
+/**
+ * Based on `build/dev-server.js` (webpack-pwa Vue.js template).
+ * With bits and pieces from a Feathers.js generated app (CLI).
+ *
+ * @since 2018-01
+ */
 'use strict'
 
 require('../../build/check-versions')()
@@ -27,9 +33,11 @@ const webpackConfig = process.env.NODE_ENV === 'testing'
   ? require('../../build/webpack.prod.conf')
   : require('../../build/webpack.dev.conf')
 
+// Setup a "Feathers-compatible Express app" (fix:terminology??)
 const app = express( feathers() )
 
 app.set('app.root_dir', path.join(__dirname, '..', '..') )
+
 // Load app configuration
 app.configure(configuration())
 
@@ -70,6 +78,14 @@ function SetupNunjucksTemplatingEngine (app) {
   app.set('view engine', 'nunjucks')
 }
 
+/**
+ * Sets up traditional Express routes.
+ *
+ * TODO: have sthg more "automatic" ? like recursing into some `bundles/` sub-dir. maybe ?
+ *
+ * @param app
+ * @constructor
+ */
 function SetupExpressRoutes(app) {
   app.use('/_', require('./routes/index'))
   require('./other/phantom')(app, '/_/pdf')
@@ -79,13 +95,19 @@ function SetupExpressRoutes(app) {
 // SetupNunjucksTemplatingEngine( app )
 SetupExpressRoutes( app )
 
+// --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+
 // default port where dev server listens for incoming traffic
 const port = process.env.PORT || config.dev.port
+
 // automatically open browser, if not set will be false
 const autoOpenBrowser = !!config.dev.autoOpenBrowser
+
 // Define HTTP proxies to your custom API backend
 // https://github.com/chimurai/http-proxy-middleware
 const proxyTable = config.dev.proxyTable
+
+// --- Webpack / Vue.js stuff. --- --- --- --- --- --- --- --- --- --- --- ---
 
 const compiler = webpack(webpackConfig)
 
@@ -125,6 +147,8 @@ app.use(require('connect-history-api-fallback')())
 // serve webpack bundle output
 app.use(devMiddleware)
 
+// -- More Feathers.js setups -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
+
 // Set up Plugins and providers
 app.configure(express.rest())
 app.configure(socketio())
@@ -141,6 +165,9 @@ app.configure(services)
 const channels = require('./channels')
 app.configure(channels)
 
+// -- Static/public -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
+// FIXME: duplicates `static/` & `public/`
+
 // serve pure static assets
 const staticPath = path.posix.join(config.dev.assetsPublicPath, config.dev.assetsSubDirectory)
 app.use(staticPath, express.static('./static'))
@@ -152,10 +179,11 @@ app.use('/', express.static(app.get('public')))
 app.use(express.notFound())
 app.use(express.errorHandler({ logger }))
 
+// Feathers hooks come last (why?)
 const appHooks = require('./app.hooks')
 app.hooks(appHooks)
 
-// --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+// --- RUN SERVER --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
 const uri = 'http://localhost:' + port
 
