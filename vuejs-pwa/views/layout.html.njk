@@ -1,0 +1,118 @@
+{% extends "base.html.njk" %}
+
+{% block container %}
+  <div class="row">
+    <div class="col-md-8">
+      {% block content %}
+        <div class="page-header">
+          {% block pageheader %}
+            <h1>
+              LayoutIt!
+              <small>Interface Builder for Bootstrap</small>
+            </h1>
+          {% endblock pageheader %}
+        </div>
+
+        <p class="lead">
+          Lorem ipsum dolor sit amet, <strong>consectetur adipiscing elit</strong>. Aliquam eget sapien sapien. Curabitur
+          in metus urna. In hac habitasse platea dictumst. Phasellus eu sem sapien, sed vestibulum velit. Nam purus nibh,
+          lacinia non faucibus et, pharetra in dolor. Sed iaculis posuere diam ut cursus. <em>Morbi commodo sodales nisi
+            id sodales. Proin consectetur, nisi id commodo imperdiet, metus nunc consequat lectus, id bibendum diam velit
+            et dui.</em> Proin massa magna, vulputate nec bibendum nec, posuere nec lacus.
+          <small>Aliquam mi erat, aliquam vel luctus eu, pharetra quis elit. Nulla euismod ultrices massa, et feugiat
+            ipsum consequat eu.
+          </small>
+        </p>
+
+        <h3>
+          h3. Lorem ipsum dolor sit amet.
+        </h3>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <h3 class="panel-title">
+                  Panel title
+                </h3>
+              </div>
+              <div class="panel-body">
+                Panel content
+              </div>
+              <div class="panel-footer">
+                Panel footer
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <h3 class="panel-title">
+                  Panel title
+                </h3>
+              </div>
+              <div class="panel-body">
+                Panel content
+              </div>
+              <div class="panel-footer">
+                Panel footer
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endblock content %}
+    </div> <!--/ .col-md-8 / block 'content' / layout.html.njk /-->
+
+    <!-- Right "sidebar" :: block 'aside_content' :: layout.html.njk -->
+    <div class="col-md-4">
+      {% block aside_content %}
+        <address>
+          <strong>Twitter, Inc.</strong><br> 795 Folsom Ave, Suite 600<br> San Francisco, CA 94107<br> <abbr
+            title="Phone">P:</abbr> (123) 456-7890
+        </address>
+        <h3>
+          h3. Lorem ipsum dolor sit amet.
+        </h3>
+        <p>
+          Lorem ipsum dolor sit amet, <strong>consectetur adipiscing elit</strong>. Aliquam eget sapien sapien.
+          Curabitur
+          in metus urna. In hac habitasse platea dictumst. Phasellus eu sem sapien, sed vestibulum velit. Nam purus
+          nibh,
+          lacinia non faucibus et, pharetra in dolor. Sed iaculis posuere diam ut cursus. <em>Morbi commodo sodales nisi
+            id sodales. Proin consectetur, nisi id commodo imperdiet, metus nunc consequat lectus, id bibendum diam
+            velit
+            et dui.</em> Proin massa magna, vulputate nec bibendum nec, posuere nec lacus.
+          <small>Aliquam mi erat, aliquam vel luctus eu, pharetra quis elit. Nulla euismod ultrices massa, et feugiat
+            ipsum consequat eu.
+          </small>
+        </p>
+        <p class="lead">
+          Lorem ipsum dolor sit amet, <strong>consectetur adipiscing elit</strong>. Aliquam eget sapien sapien.
+          Curabitur
+          in metus urna. In hac habitasse platea dictumst. Phasellus eu sem sapien, sed vestibulum velit. Nam purus
+          nibh,
+          lacinia non faucibus et, pharetra in dolor. Sed iaculis posuere diam ut cursus. <em>Morbi commodo sodales nisi
+            id sodales. Proin consectetur, nisi id commodo imperdiet, metus nunc consequat lectus, id bibendum diam
+            velit
+            et dui.</em> Proin massa magna, vulputate nec bibendum nec, posuere nec lacus.
+          <small>Aliquam mi erat, aliquam vel luctus eu, pharetra quis elit. Nulla euismod ultrices massa, et feugiat
+            ipsum consequat eu.
+          </small>
+        </p>
+        <p>
+          Lorem ipsum dolor sit amet, <strong>consectetur adipiscing elit</strong>. Aliquam eget sapien sapien.
+          Curabitur
+          in metus urna. In hac habitasse platea dictumst. Phasellus eu sem sapien, sed vestibulum velit. Nam purus
+          nibh,
+          lacinia non faucibus et, pharetra in dolor. Sed iaculis posuere diam ut cursus. <em>Morbi commodo sodales nisi
+            id sodales. Proin consectetur, nisi id commodo imperdiet, metus nunc consequat lectus, id bibendum diam
+            velit
+            et dui.</em> Proin massa magna, vulputate nec bibendum nec, posuere nec lacus.
+          <small>Aliquam mi erat, aliquam vel luctus eu, pharetra quis elit. Nulla euismod ultrices massa, et feugiat
+            ipsum consequat eu.
+          </small>
+        </p>
+      {% endblock aside_content %}
+    </div> <!--/ .col-md-4 / block 'aside_content' / layout.html.njk /-->
+  </div> <!--/ .row / block 'container' / layout.html.njk /-->
+{% endblock container %}

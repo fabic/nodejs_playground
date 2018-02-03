@@ -2,6 +2,12 @@
 
 let nunjucks = require('nunjucks')
 
+class FileSystemLoader extends nunjucks.FileSystemLoader {
+  constructor(searchPaths, opts) {
+    super(searchPaths, opts)
+  }
+}
+
 /**
  *
  * @author fabic.net
@@ -26,7 +32,7 @@ class Nunjucks extends nunjucks.Environment {
       noCache: true
     }
 
-    let loader = new nunjucks.FileSystemLoader('views', njkOpts)
+    let loader = new FileSystemLoader('views', njkOpts)
     super( loader )
 
     this.express( app )
