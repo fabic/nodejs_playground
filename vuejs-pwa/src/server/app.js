@@ -71,9 +71,10 @@ function SetupNunjucksTemplatingEngine (app) {
 function SetupExpressRoutes(app) {
   app.use('/_', require('./routes/index'))
   require('./other/phantom')(app, '/_/pdf')
+  require('./other/nunjucks')(app, '/_/nunjucks')
 }
 
-SetupNunjucksTemplatingEngine( app )
+// SetupNunjucksTemplatingEngine( app )
 SetupExpressRoutes( app )
 
 // default port where dev server listens for incoming traffic
@@ -83,10 +84,6 @@ const autoOpenBrowser = !!config.dev.autoOpenBrowser
 // Define HTTP proxies to your custom API backend
 // https://github.com/chimurai/http-proxy-middleware
 const proxyTable = config.dev.proxyTable
-
-if (false) {
-  let serverside = require('../../src/server/index')(app)
-}
 
 const compiler = webpack(webpackConfig)
 
