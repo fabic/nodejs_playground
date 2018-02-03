@@ -50,6 +50,8 @@ app.use(favicon(path.join(app.get('public'), 'favicon.ico')))
  *
  * @param {Express} app
  * @constructor
+ *
+ * TODO: remove, unused, replaced by `src/server/other/nunjucks.js`
  */
 function SetupNunjucksTemplatingEngine (app) {
   let nunjucks = require('nunjucks')

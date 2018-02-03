@@ -2,6 +2,12 @@
 
 let nunjucks = require('nunjucks')
 
+/**
+ * Stub template loader impl.
+ *
+ * @author fabic.net
+ * @since 2018-02-03
+ */
 class FileSystemLoader extends nunjucks.FileSystemLoader {
   constructor(searchPaths, opts) {
     super(searchPaths, opts)
