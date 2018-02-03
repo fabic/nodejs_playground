@@ -1,5 +1,5 @@
 [submodule "apostrophe-cms-js"]
-	path = apostrophe-cms
+	path = out-there/apostrophe-cms
 	url = git@github.com:apostrophecms/apostrophe.git
 [submodule "vuejs-webpack-pwa"]
 	path = tmpl-vuejs-webpack-pwa
