@@ -9,7 +9,6 @@ const wlogger        = require('winston')
 const cookieParser   = require('cookie-parser')
 const bodyParser     = require('body-parser')
 const sassMiddleware = require('node-sass-middleware')
-const nunjucks       = require('nunjucks')
 const compress       = require('compression')
 const cors           = require('cors')
 const helmet         = require('helmet')
@@ -21,6 +20,8 @@ let app = express()
 
 app.set('app.root_dir', path.join(__dirname, '..'))
 app.set('app.public', path.join(app.get('app.root_dir'), 'public'))
+app.set('app.host', 'localhost') // FIXME: temp.
+app.set('app.logger', wlogger)
 
 // Enable CORS, security, compression, favicon and body parsing
 app.use(cors())
@@ -80,7 +81,7 @@ process.on('unhandledRejection', (reason, p) =>
 )
 
 server.on('listening', () =>
-  wlogger.info('Application started on http://%s:%d', app.get('host'), port)
+  wlogger.info('Application started on http://%s:%d', app.get('app.host'), port)
 )
 
 // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---

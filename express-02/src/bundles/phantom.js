@@ -11,18 +11,49 @@ class Phantom {
     app.use(path, Phantom.Router())
     app.set('phantom', this)
     this.phantom = require('phantom')
+    this.logger = app.get('app.logger')
     console.info('ich bin Phantom !')
   }
 
   async Render (url, pdfFileName) {
     pdfFileName = pdfFileName || 'export.pdf'
 
-    const instance = await this.phantom.create()
+    const instance = await this.phantom.create([], {
+      logger: {
+        debug: this.logger.debug,
+        info: this.logger.info,
+        warn: this.logger.warn,
+        error: this.logger.error
+      },
+      logLevel: 'debug' // ignored if 'logger' is set, fyi.
+    })
+
     const page     = await instance.createPage()
+
+    await page.on('onResourceRequested', function(requestData) {
+      console.info('Requesting', requestData.url);
+    });
+
+    await page.on('onConsoleMessage', function(msg, lineNum, sourceId) {
+      console.log('CONSOLE: ' + msg + ' (from line #' + lineNum + ' in "' + sourceId + '")');
+    })
 
     await page.property('viewportSize', { width: 1280, height: 1024 })
     const status = await page.open(url)
     console.log(`Page opened with status [${status}].`)
+
+    await page.evaluate(function () {
+      return document.title
+    }).then(function (title) {
+      console.log(`Page title: ${title}`)
+    })
+
+    await new Promise(((resolve, reject) => {
+      setTimeout(() => {
+        console.info("Done waiting.")
+        resolve(true)
+      }, 1000)
+    }))
 
     await page.render(pdfFileName)
     console.log(`File created at [${pdfFileName}]`)
@@ -62,6 +93,7 @@ class Phantom {
           title: 'Huh!',
           error: `Invalid URL: ${url}`
         })
+        return
       }
       // Min. file name would be for ex. 'x.pdf'
       else if (fileName.length < 5) {
@@ -69,6 +101,7 @@ class Phantom {
           title: 'Huh!',
           error: `Invalid file name: ${fileName}`
         })
+        return
       }
 
       // todo: filter out QS arg. fn=... from URL.
