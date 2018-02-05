@@ -1,7 +1,7 @@
 'use strict'
 
 /**
- * Phantom module.
+ * Phantom wrapper module.
  *
  * @author fabic.net
  * @since 2018-02-02
@@ -15,6 +15,14 @@ class Phantom {
     console.info('ich bin Phantom !')
   }
 
+  /**
+   * Generates a PDF for the given URL.
+   *
+   * @param url
+   * @param pdfFileName
+   * @returns {Promise<*|string>}
+   * @constructor
+   */
   async Render (url, pdfFileName) {
     pdfFileName = pdfFileName || 'export.pdf'
 

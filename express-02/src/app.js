@@ -1,9 +1,15 @@
+#!/usr/bin/env node
+
 /**
+ * `src/app.js`
+ *
  * @author fabic.net
  */
 
 // @ flow
 //  ^ -_-
+
+let debug            = require('debug')('express-02:server')
 
 const express        = require('express')
 const path           = require('path')
@@ -23,6 +29,11 @@ const opn            = require('opn')
 
 const config = require('../config')
 
+/**
+ * The Express App.
+ *
+ * @type {*|Function}
+ */
 let app = express()
 
 app.set('app.root_dir', path.join(__dirname, '..'))
@@ -41,6 +52,7 @@ app.use(logger("dev"))
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(cookieParser())
+
 app.use(sassMiddleware({
   src: path.join(__dirname, "public"),
   dest: path.join(__dirname, "public"),
@@ -52,10 +64,16 @@ app.use(favicon(path.join(app.get('app.public'), 'favicon.ico')))
 
 app.use(express.static(app.get('app.public')))
 
+// --- “BUNDLES” - --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+
 require('./bundles/nunjucks')(app, '/njk')
 require('./bundles/phantom')(app, '/pdf')
 
+// --- ROUTES  --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+
 app.use("/", require("./routes/index"))
+
+// --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -76,28 +94,90 @@ app.use(function(err, req, res, next) {
 
 // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
-const port = process.env.PORT || config.dev.port
+/**
+ * Normalize a port into a number, string, or false.
+ */
+const port =
+  (function _app_js_normalizePort (val) {
+    let port = parseInt(val, 10)
+    if (isNaN(port)) {
+      // named pipe
+      return val
+    }
 
-console.log('> Starting dev server..')
+    if (port >= 0) {
+      // port number
+      return port
+    }
+
+    return false
+  })(process.env.PORT || config.dev.port)
+
+app.set('app.port', port)
+
+wlogger.info('> Starting dev server..')
 
 /* eslint-disable no-console */
 const server = app.listen(port)
 
-process.on('unhandledRejection', (reason, p) =>
-  wlogger.error('Unhandled Rejection at: Promise ', p, reason)
-)
+// --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
-server.on('listening', () =>
-  wlogger.info('Application started on http://%s:%d', app.get('app.host'), port)
+server.on('error',
+  /**
+   * Event listener for HTTP server "error" event.
+   */
+  function _app_js_onError (error) {
+    if (error.syscall !== 'listen') {
+      throw error
+    }
+
+    let bind = typeof port === 'string'
+      ? 'Pipe ' + port
+      : 'Port ' + port
+
+    // handle specific listen errors with friendly messages
+    switch (error.code) {
+      case 'EACCES':
+        console.error(bind + ' requires elevated privileges')
+        process.exit(1)
+        break
+      case 'EADDRINUSE':
+        console.error(bind + ' is already in use')
+        process.exit(1)
+        break
+      default:
+        throw error
+    }
+  })
+
+// --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+
+server.on('listening',
+  /**
+   * Event listener for HTTP server "listening" event.
+   */
+  function _app_js_onListening () {
+    let addr = server.address()
+    let bind = typeof addr === 'string'
+      ? 'pipe ' + addr
+      : 'port ' + addr.port
+    debug('Listening on ' + bind) // FIXME
+    wlogger.info(
+      'Application started on http://%s:%d',
+      app.get('app.host'), app.get('app.port'))
+  })
+
+process.on('unhandledRejection', (reason, p) =>
+  wlogger.error('(!!) Dude: Unhandled Rejection at: Promise ', p, reason)
 )
 
 // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
-// module.exports = {
-//   app: app,
-//   close: () => {
-//     server.close()
-//   }
-// }
+module.exports = {
+  app: app,
+  close: () => {
+    server.close()
+  }
+}
 
-module.exports = app
+/* EOF */
