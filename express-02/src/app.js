@@ -1,3 +1,10 @@
+/**
+ * @author fabic.net
+ */
+
+// @ flow
+//  ^ -_-
+
 const express        = require('express')
 const path           = require('path')
 const favicon        = require('serve-favicon')
@@ -71,7 +78,7 @@ app.use(function(err, req, res, next) {
 
 const port = process.env.PORT || config.dev.port
 
-console.log('> Starting dev server...')
+console.log('> Starting dev server..')
 
 /* eslint-disable no-console */
 const server = app.listen(port)

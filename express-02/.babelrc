@@ -1,3 +1,13 @@
 {
-  "presets": ["flow"]
+  //  "presets": ["env", "flow"]
+  // ^ The 'env' preset w/o any 'targets' conf. will produce too much useless code
+  //   for me at the moment.
+  "presets": [
+    ["env", {
+      "targets": {
+        "node": "current"
+      }
+    }],
+    "flow"
+  ]
 }

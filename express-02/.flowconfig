@@ -1,11 +1,16 @@
 [ignore]
+#.*/node_modules/.*
 
 [include]
 
 [libs]
+#flow-typed
 
 [lints]
 
 [options]
+# If true => check every file, not just those that
+#            have a //@flow comment at top of file.
+#all=true
 
 [strict]

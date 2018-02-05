@@ -2,35 +2,41 @@
   "name": "express-02",
   "version": "0.0.0",
   "private": true,
+  "main": "src/bin/run-web-app.shebang.js",
   "scripts": {
     "build": "babel src/ -d dist/",
     "prepublish": "npm run build",
     "flow": "flow",
-    "start": "node --harmony dist/bin/run-web-app.shebang.js"
+    "flow:check": "flow check ./src/",
+    "start": "bin/babel-node src/bin/run-web-app.shebang.js",
+    "dev": "bin/nodemon -V --watch src/ --exec bin/babel-node $NODE_DEBUG_OPTION src/bin/run-web-app.shebang.js",
+    "dev2": "watch --wait=1 'babel src/ -d dist/' ./src/ & nodemon $NODE_DEBUG_OPTION ./dist/bin/run-web-app.shebang.js"
   },
   "dependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-preset-flow": "^6.23.0",
-    "body-parser": "~1.18.2",
+    "body-parser": "^1.18.2",
     "bootstrap": "^4.0.0",
     "chalk": "^2.3.0",
     "compression": "^1.7.1",
-    "cookie-parser": "~1.4.3",
+    "cookie-parser": "^1.4.3",
     "cors": "^2.8.4",
-    "debug": "~2.6.9",
+    "debug": "^2.6.9",
     "express": "^4.16.0",
     "helmet": "^3.10.0",
-    "morgan": "~1.9.0",
+    "morgan": "^ 1.9.0",
     "node-sass-middleware": "0.9.8",
     "nunjucks": "^3.0.1",
     "opn": "^5.2.0",
     "pg-promise": "^7.4.1",
     "phantom": "^4.0.12",
-    "serve-favicon": "~2.4.5",
+    "serve-favicon": "^2.4.5",
     "winston": "^2.4.0"
   },
   "devDependencies": {
-    "babel-register": "^6.26.0",
-    "flow-bin": "^0.64.0"
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-flow": "^6.23.0",
+    "flow-bin": "^0.64.0",
+    "nodemon": "^1.14.12",
+    "watch": "^1.0.2"
   }
 }
