@@ -4,6 +4,6 @@ module.exports = {
   build: {},
   dev: {
     port: 3333,
-    autoOpenBrowser: false,
+    autoOpenBrowser: true,
   }
 }

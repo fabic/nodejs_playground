@@ -162,9 +162,13 @@ server.on('listening',
       ? 'pipe ' + addr
       : 'port ' + addr.port
     debug('Listening on ' + bind) // FIXME
-    wlogger.info(
-      'Application started on http://%s:%d',
-      app.get('app.host'), app.get('app.port'))
+    wlogger.info('Application started on http://%s:%d', app.get('app.host'),
+                                                        app.get('app.port'))
+    if (config.dev.autoOpenBrowser) {
+      let uri = `http://${app.get('app.host')}:${app.get('app.port')}`
+      wlogger.info(`Opening '${uri}' in browser.`)
+      opn(uri)
+    }
   })
 
 process.on('unhandledRejection', (reason, p) =>
