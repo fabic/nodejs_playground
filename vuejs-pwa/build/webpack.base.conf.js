@@ -1,6 +1,11 @@
 'use strict'
 
 const path = require('path')
+
+// https://medium.com/@estherfalayi/setting-up-webpack-for-bootstrap-4-and-font-awesome-eb276e04aaeb
+// const TransferWebpackPlugin = require('transfer-webpack-plugin');
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
+
 const utils = require('./utils')
 const config = require('../config')
 const vueLoaderConfig = require('./vue-loader.conf')
@@ -27,6 +32,14 @@ module.exports = {
       '@': resolve('src')
     }
   },
+  // // https://medium.com/@estherfalayi/setting-up-webpack-for-bootstrap-4-and-font-awesome-eb276e04aaeb
+  plugins: [
+    // new webpack.HotModuleReplacementPlugin(),
+    new ExtractTextPlugin('main.css'),
+    // new TransferWebpackPlugin([
+    //   { from: 'client' },
+    // ])
+  ],
   module: {
     rules: [
       {
@@ -71,6 +84,37 @@ module.exports = {
           limit: 10000,
           name: utils.assetsPath('fonts/[name].[hash:7].[ext]')
         }
+      },
+      { // See Bootstrap Webpack setup :
+        // https://getbootstrap.com/docs/4.0/getting-started/webpack/
+        test: /\.(scss)$/,
+        use: ExtractTextPlugin.extract({
+          fallback: 'style-loader',
+          use: [
+            {
+              loader: 'style-loader',     // inject CSS to page // creates style nodes from JS strings
+            },
+            {
+              loader: 'css-loader',       // translates CSS into CommonJS modules
+            },
+            { // https://github.com/postcss/postcss-loader
+              loader: 'postcss-loader',   // Run post css actions
+              options: {
+                plugins: function () {    // post css plugins, can be exported to postcss.config.js
+                  return [
+                    require('precss'),
+                    require('autoprefixer')
+                  ]
+                }
+              }
+            },
+            { // https://github.com/webpack-contrib/sass-loader
+              loader: 'sass-loader', // compiles Sass to CSS
+              options: {
+                includePaths: ["absolute/path/a", "absolute/path/b"]
+              }
+            }
+          ]})
       }
     ]
   }
