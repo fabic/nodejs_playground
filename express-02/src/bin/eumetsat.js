@@ -5,7 +5,10 @@
 'use strict'
 
 let assert = require('assert')
-let cli = require('cli')
+let cli    = require('cli')
+let fs     = require('fs')
+let http   = require('http')
+import { sep as PATHSEP } from 'path'
 
 cli.info("Hey!")
 cli.enable('status')
@@ -23,37 +26,48 @@ cli.parse({
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-function EUMetSat() {
+function EUMetSat(imagesDirectory = ".") {
     if ( ! (this instanceof EUMetSat) ) {
         return new EUMetSat()
     }
 
-    this.http = require('http')
+    this.imagesDirectory = imagesDirectory
 }
 
 EUMetSat.prototype.fetch = function _eumetsat_fetch(url :string) {
 
     const { URL } = require('url')
+
     const _url = new URL(url)
 
     const options = {
         hostname: _url.hostname,
         port: _url.port,
         path: _url.pathname + _url.search,
-        method: 'HEAD',
+        method: 'GET',
         headers: {
         }
     };
 
-    console.log(options)
+    const imageFileName = this.imagesDirectory + PATHSEP
+        + (options.path.substr(options.path.lastIndexOf('/') + 1) ||
+            "_eumetsat_fetch_error_couldnt_infer_image_filename")
 
-    const req = this.http.request(options, (res) => {
+    console.log(options, imageFileName)
+
+    const req = http.request(options, (res) => {
         console.log(`STATUS: ${res.statusCode}`);
         console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
-        res.setEncoding('utf8');
+
+        const file = fs.createWriteStream(imageFileName, { encoding: 'binary' })
+
+        res.setEncoding('binary');
+
         res.on('data', (chunk) => {
-            console.log(`BODY: ${chunk}`);
+            file.write(chunk, 'binary')
+            cli.info("Writting chunk to file...")
         });
+
         res.on('end', () => {
             console.log('No more data in response.');
         });
