@@ -32,7 +32,7 @@ const config = require('../config')
 /**
  * The Express App.
  *
- * @type {*|Function}
+ * @ type {*|Function}
  */
 let app = express()
 
