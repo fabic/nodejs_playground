@@ -6,10 +6,12 @@ rewt="$(cd `dirname "$0"`/.. && pwd)"
 
 >&2 echo "+-- $0 $@"
 
-source ~/.bashrc
-# ^ FIXME: fix that .bashrc of yours.
-
-PATH=~/.local/node-v9.8.0-linux-x64/bin:$PATH
+if ! shopt -q login_shell ; then
+  >&2 echo "| Shell is not a login shell, sourcing ~/.bashrc"
+  >&2 echo "| ( i) FABIC_BASHRC_SOURCED = $FABIC_BASHRC_SOURCED"
+  source ~/.bashrc
+  >&2 echo "| (ii) FABIC_BASHRC_SOURCED = $FABIC_BASHRC_SOURCED"
+fi
 
 >&2 echo "| Entering Node.js project directory '$rewt'"
 
@@ -21,5 +23,6 @@ npm_cmd=( "`type -p npm`" "$@" )
 
 >&2 echo "| Running NPM command:"
 >&2 echo "|   ${npm_cmd[@]}"
+>&2 echo
 
 exec "${npm_cmd[@]}"
