@@ -13,7 +13,8 @@ const http   = require('http')
 import { URL }            from 'url'
 import { sep as PATHSEP } from 'path'
 
-cli.info("Hey!")
+cli.info("HEY!")
+
 cli.enable('status')
 cli.parse({
     file: [ 'f', 'A file to process', 'file', null ],
@@ -47,7 +48,8 @@ function EUMetSat(imagesDirectory = ".") {
  * @param url {string}
  * @returns {Promise<any>}
  */
-EUMetSat.prototype.probeResourceAt = function _eumetsat_probe_res(url :string) {
+EUMetSat.prototype.probeResourceAt = function _eumetsat_probe_res(url :string)
+{
     return new Promise((resolve, reject) => {
         const _url = new URL(url)
 
@@ -60,18 +62,19 @@ EUMetSat.prototype.probeResourceAt = function _eumetsat_probe_res(url :string) {
             }
         };
 
-        console.log(options)
+        logger.debug(`Probing resource at ${url}`)
+        logger.debug(options)
 
         const req = http.request(options, (res) => {
-            console.log(`STATUS: ${res.statusCode}`);
-            console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
+            logger.debug(`STATUS: ${res.statusCode}`);
+            logger.debug(`HEADERS: ${JSON.stringify(res.headers)}`);
 
             res.on('data', (chunk) => {
                 logger.warn("Huh! we shall NOT receive any data as part of a HEAD HTTP request !")
             });
 
             res.on('end', () => {
-                logger.info('No more data in response.');
+                logger.info(`Done fetching headers for the resource at ${url}`);
                 let headers = Object.assign({
                     _url: _url,
                     _fileName: _url.pathname.substr(_url.pathname.lastIndexOf('/')+1) ||
@@ -119,15 +122,11 @@ EUMetSat.prototype.fetchResourceAt = function _eumetsat_fetch_res(url :string,
             + (options.path.substr(options.path.lastIndexOf('/') + 1) ||
                 "_eumetsat_fetch_error_couldnt_infer_image_filename"))
 
-        logger.debug(options, saveFileName)
-
         const req = http.request(options, (res) => {
-            logger.info(`About to fetch resource at ${url}, saving to file ${saveFileName}.`)
-
-            console.log(`STATUS: ${res.statusCode}`);
-            console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
-
-            logger.debug(`Creating file '${saveFileName}'.`)
+            logger.info(`Fetching resource at ${url}, saving to file '${saveFileName}'.`)
+            logger.debug(`STATUS: ${res.statusCode}`);
+            logger.debug(`HEADERS: ${JSON.stringify(res.headers)}`);
+            logger.info(`Creating file '${saveFileName}'.`)
 
             const file = fs.createWriteStream(saveFileName, { encoding: 'binary' })
 
@@ -145,7 +144,7 @@ EUMetSat.prototype.fetchResourceAt = function _eumetsat_fetch_res(url :string,
         });
 
         req.on('error', (e) => {
-            console.error(`problem with request: ${e.message}`);
+            logger.error(`Problem with request: ${e.message}`);
             reject(e)
         });
 
@@ -159,16 +158,74 @@ EUMetSat.prototype.fetchResourceAt = function _eumetsat_fetch_res(url :string,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 EUMetSat.prototype.fetch = function _eumetsat_fetch(url :string) {
+    logger.info(`EUMetSat.fetch('${url}') : BEGIN`)
     return this.probeResourceAt(url)
+        // #1 : Infer a target on-disk file name based on the resource headers.
+        //      Returns a "metadata" map (object).
         .then((headers: Object) => {
-            console.log(headers)
             const lastModified = new Date( headers['last-modified'] )
-            let saveFileName = `${headers._fileName}_${lastModified.toISOString()}`
-            console.log(lastModified, saveFileName)
-            return this.fetchResourceAt(url, saveFileName)
+            const lastDotAt = headers._fileName.lastIndexOf('.')
+            const saveFileNameExt = headers._fileName.substr(lastDotAt)
+            const saveFileName = headers._fileName.substr(0, lastDotAt)
+                + '_' + lastModified.toISOString()
+                // Etag comes enclosed within double-quotes, remove these.
+                + '_' + headers['etag'].substr(1, headers['etag'].length-2)
+                + saveFileNameExt
+            let meta = {
+                saveFileName: saveFileName,
+                saveFileNameExt: saveFileNameExt,
+                url:      headers._url,
+                fileName: headers._fileName,
+                headers:  headers,
+                mustFetchNewerResource: false,
+                stats: null,
+                file: null
+            }
+            return meta
         })
-        .then((file: fs.WriteStream) => {
-            return file
+        // #2 : Find out if a file already exist on-disk
+        //      We're setting the `meta.mustFetchNewerResource` flag for the
+        //      next .then() handler.
+        .then((meta :Object) => {
+            meta.mustFetchNewerResource = false
+            return new Promise((resolve, reject) => {
+                fs.stat(meta.saveFileName, (err /* Error */, stats :fs.Stats) => {
+                    const fileDoesNotExist = err && err.code === 'ENOENT';
+                    if (fileDoesNotExist) {
+                        meta.mustFetchNewerResource = true
+                        resolve(meta)
+                    }
+                    // We do not expect any other form of error from stat()
+                    else if (err)
+                        reject( err )
+                    // Else file exists and we need to test if it has the same
+                    // size and Etag of the remote resource.
+                    else {
+                        // TODO: impl.
+                        meta.stats = stats
+                        resolve(meta)
+                    }
+                })
+            })
+        })
+        // #3 : Fetch resource if needed.
+        .then((meta :Object) => {
+            if (meta.mustFetchNewerResource) {
+                return this.fetchResourceAt(url, meta.saveFileName)
+                    .then((file: fs.WriteStream) => {
+                        meta.file = file
+                        return meta
+                    })
+            }
+            else return meta
+        })
+        // #4 : Drop a few lines through the log for information.
+        .then((meta :Object) => {
+            logger.debug(meta)
+            return meta
+        })
+        .finally(() => {
+            logger.info(`EUMetSat.fetch('${url}') : END.`)
         })
 } // _eumetsat_fetch //
 
@@ -176,13 +233,15 @@ EUMetSat.prototype.fetch = function _eumetsat_fetch(url :string) {
 
 let eumetsat = new EUMetSat()
 
-if (cli.command == "fetch") {
+if (cli.command === "fetch") {
     cli.info("Running EUMetSat.fetch().")
     eumetsat.fetch("http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_WV062_WestIndianOcean.jpg")
-        .then((file :fs.WriteStream) => {
-            console.log(file, file.path)
+        .then((meta :Object) => {
+            logger.info("Got sthg !")
         })
-
+        .finally(() => {
+            logger.info("Done ;-")
+        })
 }
 
-cli.info('Bye ;-')
+cli.info('EOS')
