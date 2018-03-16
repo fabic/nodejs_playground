@@ -21,7 +21,7 @@ cli.parse({
     time: [ 't', 'An access time', 'time', false],
     work: [ false, 'What kind of work to do', 'string', 'sleep' ],
     regx: [ 'r', 'Regular expression', 'string', 'TODO' ],
-}, ['fetch', 'hash', 'encode'])
+}, ['fetch', 'fetch-all', 'encode'])
 
 //console.log(cli.args)
 //console.log(cli.command)
@@ -40,6 +40,39 @@ function EUMetSat(imagesDirectory = ".") {
     }
 
     this.imagesDirectory = imagesDirectory
+
+    this.satelliteImagesList = [
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_WV062_WestIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_WV062_EastIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_IR039Color_WestIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_IR039Color_EastIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_IR108Color_WestIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_IR108Color_EastIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_VIS006Color_WestIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_VIS006Color_EastIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBAirmass_WestIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBAirmass_EastIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBAsh_WestIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBAsh_EastIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBConvection_WestIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBConvection_EastIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBDust_WestIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBDust_EastIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBFog_WestIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBFog_EastIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBMicrophysics_WestIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBMicrophysics_EastIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBNatColour_WestIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBNatColour_EastIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBSolarDay_WestIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBSolarDay_EastIndianOcean.jpg" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_MPE_WestIndianOcean.png" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_MPE_EastIndianOcean.png" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_FIR_WestIndianOcean.png" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_FIR_EastIndianOcean.png" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_AMV_WestIndianOcean.png" },
+        { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_AMV_EastIndianOcean.png" },
+    ]
 }
 
 /**
@@ -51,6 +84,8 @@ function EUMetSat(imagesDirectory = ".") {
 EUMetSat.prototype.probeResourceAt = function _eumetsat_probe_res(url :string)
 {
     return new Promise((resolve, reject) => {
+        logger.info(`EUMetSat.probeResourceAt('${url}').`)
+
         const _url = new URL(url)
 
         const options = {
@@ -59,6 +94,7 @@ EUMetSat.prototype.probeResourceAt = function _eumetsat_probe_res(url :string)
             path: _url.pathname + _url.search,
             method: 'HEAD',
             headers: {
+                'Connection': 'keep-alive'
             }
         };
 
@@ -74,7 +110,7 @@ EUMetSat.prototype.probeResourceAt = function _eumetsat_probe_res(url :string)
             });
 
             res.on('end', () => {
-                logger.info(`Done fetching headers for the resource at ${url}`);
+                logger.info(`EUMetSat.probeResourceAt(): Done fetching headers for the resource at ${url}`);
                 let headers = Object.assign({
                     _url: _url,
                     _fileName: _url.pathname.substr(_url.pathname.lastIndexOf('/')+1) ||
@@ -85,7 +121,7 @@ EUMetSat.prototype.probeResourceAt = function _eumetsat_probe_res(url :string)
         });
 
         req.on('error', (e) => {
-            logger.error(`Problem with request: ${e.message}`);
+            logger.error(`EUMetSat.probeResourceAt(): Problem with request: ${e.message}`);
             reject(e)
         });
 
@@ -106,6 +142,8 @@ EUMetSat.prototype.fetchResourceAt = function _eumetsat_fetch_res(url :string,
                                                                   saveFileName :string)
 {
     return new Promise((resolve, reject) => {
+        logger.info(`EUMetSat.fetchResourceAt('${url}', '${saveFileName}').`)
+
         const _url = new URL(url)
 
         const options = {
@@ -114,6 +152,7 @@ EUMetSat.prototype.fetchResourceAt = function _eumetsat_fetch_res(url :string,
             path: _url.pathname + _url.search,
             method: 'GET',
             headers: {
+                'Connection': 'keep-alive'
             }
         };
 
@@ -123,10 +162,10 @@ EUMetSat.prototype.fetchResourceAt = function _eumetsat_fetch_res(url :string,
                 "_eumetsat_fetch_error_couldnt_infer_image_filename"))
 
         const req = http.request(options, (res) => {
-            logger.info(`Fetching resource at ${url}, saving to file '${saveFileName}'.`)
+            logger.info(`EUMetSat.fetchResourceAt(): Fetching resource at ${url}, saving to file '${saveFileName}'.`)
             logger.debug(`STATUS: ${res.statusCode}`);
             logger.debug(`HEADERS: ${JSON.stringify(res.headers)}`);
-            logger.info(`Creating file '${saveFileName}'.`)
+            logger.info(`EUMetSat.fetchResourceAt(): Creating file '${saveFileName}'.`)
 
             const file = fs.createWriteStream(saveFileName, { encoding: 'binary' })
 
@@ -134,7 +173,7 @@ EUMetSat.prototype.fetchResourceAt = function _eumetsat_fetch_res(url :string,
 
             res.on('data', (chunk) => {
                 file.write(chunk, 'binary')
-                logger.debug(`Writing chunk to file ${file.path}...`)
+                logger.debug(`EUMetSat.fetchResourceAt(): Writing chunk to file ${file.path}...`)
             });
 
             res.on('end', () => {
@@ -144,7 +183,7 @@ EUMetSat.prototype.fetchResourceAt = function _eumetsat_fetch_res(url :string,
         });
 
         req.on('error', (e) => {
-            logger.error(`Problem with request: ${e.message}`);
+            logger.error(`EUMetSat.fetchResourceAt(): Problem with request: ${e.message}`);
             reject(e)
         });
 
@@ -228,6 +267,24 @@ EUMetSat.prototype.fetch = function _eumetsat_fetch(url :string) {
             logger.info(`EUMetSat.fetch('${url}') : END.`)
         })
 } // _eumetsat_fetch //
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+EUMetSat.prototype.fetchAll = function _eumetsat_fetch_all() {
+    return new Promise(async (resolve, reject) => {
+        logger.info(`EUMetSat.fetchAll() : BEGIN`)
+        // this.satelliteImagesList.forEach(async (elt :Object) => {
+        //     logger.info(`EUMetSat.fetchAll(): Processing resource at ${elt.url}`)
+        //     let foo = await this.fetch(elt.url)
+        //     // console.log(foo)
+        // })
+        for(const elt of this.satelliteImagesList) {
+            logger.info(`EUMetSat.fetchAll(): Processing resource at ${elt.url}`)
+            let foo = await this.fetch(elt.url)
+        }
+
+        resolve(true)
+    })
+} // _eumetsat_fetch //
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -237,10 +294,20 @@ if (cli.command === "fetch") {
     cli.info("Running EUMetSat.fetch().")
     eumetsat.fetch("http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_WV062_WestIndianOcean.jpg")
         .then((meta :Object) => {
-            logger.info("Got sthg !")
+            logger.info("fetch: Got sthg !")
         })
         .finally(() => {
-            logger.info("Done ;-")
+            logger.info("fetch: Done, finally ;-")
+        })
+}
+else if (cli.command === "fetch-all") {
+    cli.info("Running EUMetSat.fetchAll().")
+    eumetsat.fetchAll()
+        .then((t) => {
+            logger.info(`fetch-all: we're done.`)
+        })
+        .finally(() => {
+            logger.info("fetch-all: finally, 'tis over.")
         })
 }
 
