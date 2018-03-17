@@ -69,6 +69,10 @@ app.use(express.static(app.get('app.public')))
 require('./bundles/nunjucks')(app, '/njk')
 require('./bundles/phantom')(app, '/pdf')
 
+// require('./bundles/eumetsat')(app, '/EUMetSat')
+import { EUMetSatBundle } from "./bundles/eumetsat"
+EUMetSatBundle(app, '/EUMetSat')
+
 // --- ROUTES  --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
 app.use("/", require("./routes/index"))

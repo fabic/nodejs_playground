@@ -3,10 +3,9 @@
 'use strict'
 
 const assert = require('assert')
-const logger = require('winston')
 const fs     = require('fs')
 const http   = require('http')
-const schedule = require('node-schedule')
+const NodeSchedule = require('node-schedule')
 
 import { URL }            from 'url'
 import { sep as PATHSEP } from 'path'
@@ -17,14 +16,16 @@ import { sep as PATHSEP } from 'path'
  *
  * @constructor
  * @param imagesDirectory {string}
+ * @param logger {Object}
  * @returns {EUMetSat}
  */
-export function EUMetSat(imagesDirectory :string = ".") {
-    if ( ! (this instanceof EUMetSat) ) {
-        return new EUMetSat()
-    }
-
+export function EUMetSat(imagesDirectory :string = ".",
+                         logger :Object = null,
+                         jobScheduler :Object = null)
+{
     this.imagesDirectory = imagesDirectory
+    this.logger = logger || console
+    this.jobScheduler = jobScheduler || NodeSchedule
 
     this.satelliteImagesList = [
         { id: "WV_6.2_West_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_WV062_WestIndianOcean.jpg", update_frequency: 3*60*60, type: "Channels" },
@@ -74,7 +75,7 @@ export function EUMetSat(imagesDirectory :string = ".") {
 EUMetSat.prototype.probeResourceAt = function _eumetsat_probe_res(url :string)
 {
     return new Promise((resolve, reject) => {
-        logger.info(`EUMetSat.probeResourceAt('${url}').`)
+        this.logger.info(`EUMetSat.probeResourceAt('${url}').`)
 
         const _url = new URL(url)
 
@@ -88,19 +89,19 @@ EUMetSat.prototype.probeResourceAt = function _eumetsat_probe_res(url :string)
             }
         };
 
-        logger.debug(`Probing resource at ${url}`)
-        logger.debug(options)
+        this.logger.debug(`Probing resource at ${url}`)
+        this.logger.debug(options)
 
         const req = http.request(options, (res) => {
-            logger.debug(`STATUS: ${res.statusCode}`);
-            logger.debug(`HEADERS: ${JSON.stringify(res.headers)}`);
+            this.logger.debug(`STATUS: ${res.statusCode}`);
+            this.logger.debug(`HEADERS: ${JSON.stringify(res.headers)}`);
 
             res.on('data', (chunk) => {
-                logger.warn("Huh! we shall NOT receive any data as part of a HEAD HTTP request !")
+                this.logger.warn("Huh! we shall NOT receive any data as part of a HEAD HTTP request !")
             });
 
             res.on('end', () => {
-                logger.info(`EUMetSat.probeResourceAt(): Done fetching headers for the resource at ${url}`);
+                this.logger.info(`EUMetSat.probeResourceAt(): Done fetching headers for the resource at ${url}`);
                 let headers = Object.assign({
                     _url: _url,
                     _fileName: _url.pathname.substr(_url.pathname.lastIndexOf('/')+1) ||
@@ -111,7 +112,7 @@ EUMetSat.prototype.probeResourceAt = function _eumetsat_probe_res(url :string)
         });
 
         req.on('error', (e) => {
-            logger.error(`EUMetSat.probeResourceAt(): Problem with request: ${e.message}`);
+            this.logger.error(`EUMetSat.probeResourceAt(): Problem with request: ${e.message}`);
             reject(e)
         });
 
@@ -132,7 +133,7 @@ EUMetSat.prototype.fetchResourceAt = function _eumetsat_fetch_res(url :string,
                                                                   saveFileName :string)
 {
     return new Promise((resolve, reject) => {
-        logger.info(`EUMetSat.fetchResourceAt('${url}', '${saveFileName}').`)
+        this.logger.info(`EUMetSat.fetchResourceAt('${url}', '${saveFileName}').`)
 
         const _url = new URL(url)
 
@@ -152,10 +153,10 @@ EUMetSat.prototype.fetchResourceAt = function _eumetsat_fetch_res(url :string,
                 "_eumetsat_fetch_error_couldnt_infer_image_filename"))
 
         const req = http.request(options, (res) => {
-            logger.info(`EUMetSat.fetchResourceAt(): Fetching resource at ${url}, saving to file '${saveFileName}'.`)
-            logger.debug(`STATUS: ${res.statusCode}`);
-            logger.debug(`HEADERS: ${JSON.stringify(res.headers)}`);
-            logger.info(`EUMetSat.fetchResourceAt(): Creating file '${saveFileName}'.`)
+            this.logger.info(`EUMetSat.fetchResourceAt(): Fetching resource at ${url}, saving to file '${saveFileName}'.`)
+            this.logger.debug(`STATUS: ${res.statusCode}`);
+            this.logger.debug(`HEADERS: ${JSON.stringify(res.headers)}`);
+            this.logger.info(`EUMetSat.fetchResourceAt(): Creating file '${saveFileName}'.`)
 
             const file = fs.createWriteStream(saveFileName, { encoding: 'binary' })
 
@@ -163,17 +164,17 @@ EUMetSat.prototype.fetchResourceAt = function _eumetsat_fetch_res(url :string,
 
             res.on('data', (chunk) => {
                 file.write(chunk, 'binary')
-                logger.debug(`EUMetSat.fetchResourceAt(): Writing chunk to file ${saveFileName}...`)
+                this.logger.debug(`EUMetSat.fetchResourceAt(): Writing chunk to file ${saveFileName}...`)
             });
 
             res.on('end', () => {
-                logger.debug('No more data in response.');
+                this.logger.debug('No more data in response.');
                 resolve(file)
             });
         });
 
         req.on('error', (e) => {
-            logger.error(`EUMetSat.fetchResourceAt(): Problem with request: ${e.message}`);
+            this.logger.error(`EUMetSat.fetchResourceAt(): Problem with request: ${e.message}`);
             reject(e)
         });
 
@@ -187,7 +188,7 @@ EUMetSat.prototype.fetchResourceAt = function _eumetsat_fetch_res(url :string,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 EUMetSat.prototype.fetch = function _eumetsat_fetch(url :string) {
-    logger.info(`EUMetSat.fetch('${url}') : BEGIN`)
+    this.logger.info(`EUMetSat.fetch('${url}') : BEGIN`)
     return this.probeResourceAt(url)
     // #1 : Infer a target on-disk file name based on the resource headers.
     //      Returns a "metadata" map (object).
@@ -203,6 +204,7 @@ EUMetSat.prototype.fetch = function _eumetsat_fetch(url :string) {
             let meta = {
                 saveFileName: saveFileName,
                 saveFileNameExt: saveFileNameExt,
+                lastModified: lastModified,
                 url:      headers._url,
                 fileName: headers._fileName,
                 headers:  headers,
@@ -250,25 +252,26 @@ EUMetSat.prototype.fetch = function _eumetsat_fetch(url :string) {
         })
         // #4 : Drop a few lines through the log for information.
         .then((meta :Object) => {
-            logger.debug(meta)
+            this.logger.debug(meta)
             return meta
         })
         .finally(() => {
-            logger.info(`EUMetSat.fetch('${url}') : END.`)
+            this.logger.info(`EUMetSat.fetch('${url}') : END.`)
         })
 } // _eumetsat_fetch //
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 EUMetSat.prototype.fetchAll = function _eumetsat_fetch_all() {
     return new Promise(async (resolve, reject) => {
-        logger.info(`EUMetSat.fetchAll() : BEGIN`)
+        this.logger.info(`EUMetSat.fetchAll() : BEGIN`)
         // this.satelliteImagesList.forEach(async (elt :Object) => {
-        //     logger.info(`EUMetSat.fetchAll(): Processing resource at ${elt.url}`)
+        //     this.logger.info(`EUMetSat.fetchAll(): Processing resource at ${elt.url}`)
         //     let foo = await this.fetch(elt.url)
         //     // console.log(foo)
         // })
         for(const elt of this.satelliteImagesList) {
-            logger.info(`EUMetSat.fetchAll(): Processing resource at ${elt.url}`)
+            this.logger.info(`EUMetSat.fetchAll(): Processing resource at ${elt.url}`)
             let foo = await this.fetch(elt.url)
         }
 
@@ -278,3 +281,120 @@ EUMetSat.prototype.fetchAll = function _eumetsat_fetch_all() {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
+{
+    return new Promise((resolve, reject) => {
+        this.logger.info(`EUMetSat.launchFetchJobs() : BEGIN`)
+
+        let i = 1
+        for(const elt of this.satelliteImagesList) {
+            const jobName = `EUMetSat ${elt.id}`
+            const firstRunAt = new Date( Date.now() + i*10*1000 )
+            const eumetsat = this
+
+            let lastScheduledJobAt = new Date()
+
+            const job = this.jobScheduler.scheduleJob(jobName, firstRunAt, async function(moment :Date) {
+                const job = this
+
+                eumetsat.logger.info(`EUMetSat job '${job.name}' : Go [${moment.toISOString()}]`)
+
+                let meta = await eumetsat.fetch(elt.url)
+
+                const rescheduleAt = new Date(
+                    Math.ceil(
+                        (meta.lastModified.getTime() + elt.update_frequency * 1000
+                            // Randomize within one tenth of the element update frequency hint.
+                            + Math.floor(Math.random() * elt.update_frequency/10*1000))
+                                /1000 /60
+                    ) * 60 * 1000
+                )
+
+                // Prevent two consecutive jobs from being scheduled at the exact
+                // same moment (fixme: very basic impl.)
+                if (rescheduleAt === lastScheduledJobAt) {
+                    rescheduleAt.setTime(
+                        rescheduleAt.getTime() + Math.floor(Math.random() * 60*1000)
+                    )
+                }
+
+                let ok = job.reschedule(rescheduleAt) === true
+                assert(ok, `Whoops! Failed to re-schedule job ${job.name} ! [EUMetSat.launchFetchJobs()]`)
+
+                lastScheduledJobAt = rescheduleAt
+
+                eumetsat.logger.info(`Job ${job.name} rescheduled for '${job.nextInvocation().toISOString()}'.`)
+            });
+
+            this.logger.info(`EUMetSat: Scheduled first job '${job.name}' at ${job.nextInvocation().toISOString()}.`)
+
+            i++
+        }
+
+        resolve(true)
+    })
+} // _eumetsat_launch_fetch_jobs //
+
+
+// - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - -
+
+
+/**
+ * EUMetSat express app. bundle.
+ *
+ * @author fabic.net
+ * @since 2018-02-02
+ */
+class EUMetSatApp
+{
+    logger   :Object
+    jobScheduler :Object
+    eumetsat :EUMetSat
+
+    constructor (app :Function, path :string) {
+        app.set('eumetsat', this)
+        app.use(path, EUMetSatApp.Router())
+        this.logger = app.get('app.logger')
+        this.jobScheduler = NodeSchedule
+        this.eumetsat = new EUMetSat(".", this.logger, this.jobScheduler)
+        this.logger.info("Ich bin EUMetSatApp !")
+        this.initialize()
+    }
+
+    initialize() {
+        this.jobScheduler.scheduleJob('*/1 * * * *', () => {
+            this.logger.info("Heyloo ?")
+        });
+
+        this.jobScheduler.scheduleJob('*/2 * * * *', function() {
+            console.log('Hola!')
+        });
+
+        this.eumetsat.launchFetchJobs()
+    }
+
+    static Router () {
+        let router = require('express').Router()
+
+        /* GET home page. */
+        router.get(/^.*$/, function(req, res, next) {
+            let app = req.app
+            let eumetsat = app.get('eumetsat')
+            res.render('EUMetSat/index.html.njk', {
+                title: 'Hey! dude!'
+            })
+        })
+
+        return router
+    }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+export function EUMetSatBundle(app :Function, path :string) {
+    return new EUMetSatApp(app, path)
+}
+
+// EOF //
