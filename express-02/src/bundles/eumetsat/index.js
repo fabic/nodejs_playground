@@ -299,9 +299,10 @@ EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
         this.logger.info(`EUMetSat.launchFetchJobs() : BEGIN`)
 
         let i = 1
-        for(const elt of this.satelliteImagesList) {
+        for(const elt of this.satelliteImagesList)
+        {
             const jobName = `EUMetSat ${elt.id}`
-            const firstRunAt = new Date( Date.now() + i*15*1000 )
+            const firstRunAt = new Date( Date.now() + i*15*1000 + Math.ceil(Math.random() * 10))
             const eumetsat = this
 
             let lastScheduledJobAt = new Date()
@@ -330,7 +331,7 @@ EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
                      * TODO: Or may handle non-inet error as fatal, either here or within fetch*() ?
                      */
                     catch(ex) {
-                        rescheduleRandomDelay = Math.floor(Math.random() * 30*60)
+                        rescheduleRandomDelay = Math.ceil(Math.random() * 30*60)
                         rescheduleAt = new Date(
                             Math.ceil(
                                 (moment.getTime() + 15*60*1000 + rescheduleRandomDelay * 1000)
@@ -371,7 +372,7 @@ EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
                             eumetsat.logger.warn(`   \` (!) Computed offset is less than 5 minutes (${medianOffset} secs), forcing value.`)
                         }
 
-                        rescheduleRandomDelay = Math.floor(Math.random() * 60)
+                        rescheduleRandomDelay = Math.ceil(Math.random() * 60)
                         rescheduleAt = new Date(
                             Math.ceil((moment.getTime() + medianOffset * 1000 + rescheduleRandomDelay * 1000)
                                 /1000 /60) *60 *1000 /* Round to the nearest minute. */ )
@@ -383,7 +384,7 @@ EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
                         assert(meta.file != null)
                         eumetsat.logger.info(` \` Got new file '${meta.saveFileName}', last-modified: ${meta.lastModified.toISOString()}`)
                         // Randomize within one tenth of the element update frequency hint.
-                        rescheduleRandomDelay = Math.floor(Math.random() * (elt.update_frequency / 10))
+                        rescheduleRandomDelay = Math.ceil(Math.random() * (elt.update_frequency / 10))
                         rescheduleAt = new Date(
                             Math.ceil((meta.lastModified.getTime()
                                         + elt.update_frequency * 1000
@@ -406,7 +407,7 @@ EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
                     // Prevent two consecutive jobs from being scheduled at the exact
                     // same moment (fixme: very basic impl.)
                     if (rescheduleAt === lastScheduledJobAt) {
-                        rescheduleRandomDelay = Math.floor(Math.random() * 60);
+                        rescheduleRandomDelay = Math.ceil(Math.random() * 60);
                         rescheduleAt.setTime(rescheduleAt.getTime())
                         eumetsat.logger.warn(` \` Had to delay this job a little bit  [${job.name}]`)
                     }
@@ -468,15 +469,16 @@ class EUMetSatApp
     }
 
     initialize() {
-        this.jobScheduler.scheduleJob('*/1 * * * *', () => {
-            this.logger.info("Heyloo ?")
+        this.jobScheduler.scheduleJob('*/1 * * * *', (moment :Date) => {
+            this.logger.info(`Heyloo, 'tis ${moment.toISOString()}`)
         });
 
-        this.jobScheduler.scheduleJob('*/2 * * * *', function() {
-            console.log('Hola!')
+        this.jobScheduler.scheduleJob('*/10 * * * *', function(moment :Date) {
+            console.log(`Hola! 'tis ${moment.toISOString()}`)
         });
 
         this.eumetsat.launchFetchJobs()
+        // todo: handle the returned promise ?
     }
 
     static Router () {
