@@ -330,10 +330,10 @@ EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
                      * TODO: Or may handle non-inet error as fatal, either here or within fetch*() ?
                      */
                     catch(ex) {
-                        rescheduleRandomDelay = Math.floor(Math.random() * 60)
+                        rescheduleRandomDelay = Math.floor(Math.random() * 30*60)
                         rescheduleAt = new Date(
                             Math.ceil(
-                                (moment.getTime() + 5*1000 + rescheduleRandomDelay * 1000)
+                                (moment.getTime() + 15*60*1000 + rescheduleRandomDelay * 1000)
                                 / 1000 / 60
                             ) * 60 * 1000
                         )
@@ -353,7 +353,9 @@ EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
                     if (! meta.mustFetchNewerResource) {
                         const nextUpdateExpectedAt = new Date(Math.ceil((meta.lastModified.getTime() + elt.update_frequency * 1000) /1000/60) *60 *1000)
 
-                        let remainsTilNextUpdate = (nextUpdateExpectedAt.getTime() - moment.getTime()) /1000
+                        eumetsat.logger.warn(` \` Got no file, last-modified: ${meta.lastModified.toISOString()}, next update would be by: ${nextUpdateExpectedAt.toISOString()}.`)
+
+                        let remainsTilNextUpdate = Math.ceil(nextUpdateExpectedAt.getTime()/1000 - moment.getTime()/1000)
                         eumetsat.logger.info(` \` Next resource update is ${remainsTilNextUpdate} seconds away (${nextUpdateExpectedAt.toISOString()}), computing a reschedule before it occurs.`)
 
                         if (remainsTilNextUpdate <= 0) {
@@ -361,11 +363,12 @@ EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
                             eumetsat.logger.warn(`   \` (!) Next expected resource update is *before* this moment, forcing to ${remainsTilNextUpdate} seconds.`)
                         }
 
-                        // Prevent rescheduling under 3 minutes
                         let medianOffset = Math.ceil(remainsTilNextUpdate / 2)
-                        if (medianOffset < 3*60) {
-                            medianOffset = 3*60
-                            eumetsat.logger.warn(`   \` (!) Computed offset is less than 3 minutes (${medianOffset} secs), forcing value.`)
+
+                        // Prevent rescheduling under 5 minutes
+                        if (medianOffset < 5*60) {
+                            medianOffset = 5*60
+                            eumetsat.logger.warn(`   \` (!) Computed offset is less than 5 minutes (${medianOffset} secs), forcing value.`)
                         }
 
                         rescheduleRandomDelay = Math.floor(Math.random() * 60)
@@ -373,7 +376,6 @@ EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
                             Math.ceil((moment.getTime() + medianOffset * 1000 + rescheduleRandomDelay * 1000)
                                 /1000 /60) *60 *1000 /* Round to the nearest minute. */ )
 
-                        eumetsat.logger.warn(` \` Got no file, last-modified: ${meta.lastModified.toISOString()}`)
                         eumetsat.logger.warn(`   \` Re-scheduling job for '${rescheduleAt.toISOString()}'  [${job.name}]`)
                     }
                     // Ok, we fetched the newer resource, reschedule based on the update frequency hint.
@@ -381,10 +383,11 @@ EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
                         assert(meta.file != null)
                         eumetsat.logger.info(` \` Got new file '${meta.saveFileName}', last-modified: ${meta.lastModified.toISOString()}`)
                         // Randomize within one tenth of the element update frequency hint.
-                        rescheduleRandomDelay = Math.floor(Math.random() * elt.update_frequency / 10)
+                        rescheduleRandomDelay = Math.floor(Math.random() * (elt.update_frequency / 10))
                         rescheduleAt = new Date(
                             Math.ceil((meta.lastModified.getTime()
-                                        + elt.update_frequency * 1000)
+                                        + elt.update_frequency * 1000
+                                        + 60*1000 /* plus one minute. */)
                                             /1000 /60) *60 *1000)
                     }
 
@@ -393,7 +396,7 @@ EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
                     // resources "out-of-sync".
                     if (rescheduleAt <= moment) {
                         eumetsat.logger.warn(` \` Will re-schedule job ${job.name} as it was scheduled in the past: ${rescheduleAt.toISOString()}, now: ${moment.toISOString()}.`)
-                        rescheduleRandomDelay = Math.floor(Math.random() * 10)
+                        rescheduleRandomDelay = Math.ceil(Math.random() * 60)
                         rescheduleAt = new Date(
                             Math.ceil((moment.getTime() + 5*1000)
                                 /1000 /60) *60 *1000)
@@ -408,9 +411,10 @@ EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
                         eumetsat.logger.warn(` \` Had to delay this job a little bit  [${job.name}]`)
                     }
 
-                    // We do want the above logic to come up with some delay amount.
-                    if (rescheduleRandomDelay === 0) {
-                        rescheduleRandomDelay = Math.floor(Math.random() * 20)
+                    // We do want the above logic to come up with some delay amount,
+                    // and we require at least a 10 seconds delay.
+                    if (rescheduleRandomDelay <= 10) {
+                        rescheduleRandomDelay += 10 + Math.ceil(Math.random() * 60)
                         eumetsat.logger.warn(` \` (!) Introducing last minute delay by ${rescheduleRandomDelay} seconds.`)
                     }
 
