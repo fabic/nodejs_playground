@@ -443,6 +443,31 @@ EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
     })
 } // _eumetsat_launch_fetch_jobs //
 
+/**
+ * Output the list of scheduled jobs to the logs.
+ */
+EUMetSat.prototype.logJobList = function _eumetsat_log_job_list() {
+    this.logger.info("")
+    this.logger.info("+- - -")
+    const now = new Date()
+    this.logger.info(`| Hola! 'tis ${now.toISOString()}, here's the list of jobs :`)
+    Object.entries(this.jobScheduler.scheduledJobs)
+        .map((pair) => pair[1])
+        .sort((job_a :NodeSchedule.Job, job_b :NodeSchedule.Job) => {
+            // return job_a.nextInvocation() - job_b.nextInvocation()
+            // ^ nextInvocation() mays return NULL -_-
+            const a = job_a.nextInvocation() || new Date(0)
+            const b = job_b.nextInvocation() || new Date(0)
+            return a.getTime() - b.getTime()
+        })
+        .forEach((job :NodeSchedule.Job, index) => {
+            const at :Date = job.nextInvocation()
+            this.logger.info(`| #${index+1}  ${at != null ? at.toISOString() : 'NULL'}  ${job.name}`)
+        })
+    this.logger.info("+- - -")
+    this.logger.info("")
+}
+
 
 // - -
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -479,27 +504,17 @@ class EUMetSatApp
 
         // Output the list of jobs to the logs, every 10 minutes.
         this.jobScheduler.scheduleJob("Job periodic lister", '0 */10 * * * *', (moment :Date) => {
-            this.logger.info("")
-            this.logger.info("+- - -")
-            this.logger.info(`| Hola! 'tis ${moment.toISOString()}, here's the list of jobs :`)
-            Object.entries(this.jobScheduler.scheduledJobs)
-                .map((pair) => pair[1])
-                .sort((job_a :NodeSchedule.Job, job_b :NodeSchedule.Job) => {
-                    // return job_a.nextInvocation() - job_b.nextInvocation()
-                    // ^ nextInvocation() mays return NULL -_-
-                    const a = job_a.nextInvocation() || new Date(0)
-                    const b = job_b.nextInvocation() || new Date(0)
-                    return a.getTime() - b.getTime()
-                })
-                .forEach((job :NodeSchedule.Job, index) => {
-                    const at :Date = job.nextInvocation()
-                    this.logger.info(`| #${index+1}  ${at != null ? at.toISOString() : 'NULL'}  ${job.name}`)
-                })
-            this.logger.info("+- - -")
-            this.logger.info("")
+            this.eumetsat.logJobList()
         });
 
         this.eumetsat.launchFetchJobs()
+            .then(() => {
+                this.eumetsat.logJobList()
+            })
+            .finally(() => {
+                this.logger.info("EUMetSatApp.initialize(): done.")
+                this.logger.info("")
+            })
         // todo: handle the returned promise ?
     }
 
