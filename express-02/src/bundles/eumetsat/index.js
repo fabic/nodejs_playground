@@ -366,11 +366,12 @@ EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
 
                         let medianOffset = Math.ceil(remainsTilNextUpdate / 2)
 
-                        // Prevent rescheduling under 7 minutes (requirement from
-                        // EUMetSat data policy is 15 min.).
-                        if (medianOffset < 7*60) {
-                            medianOffset = 7*60
-                            eumetsat.logger.warn(`   \` (!) Computed offset is less than 7 minutes (${medianOffset} secs), forcing value.`)
+                        // as to adhere to EUMetSat data policy.
+                        // Prevent rescheduling under the 15 minutes threshold so
+                        const threshold = 15 * 60
+                        if (medianOffset < threshold) {
+                            eumetsat.logger.warn(`   \` (!) Computed offset (${medianOffset} secs) is less than ${threshold/60} minutes, forcing value.`)
+                            medianOffset = threshold
                         }
 
                         rescheduleRandomDelay = Math.ceil(Math.random() * 60)
@@ -428,6 +429,7 @@ EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
                     lastScheduledJobAt = rescheduleAt
 
                     eumetsat.logger.info(`\` Ok, job ${job.name} rescheduled for '${job.nextInvocation().toISOString()}' [last-modified: ${meta.lastModified.toISOString()}, delay: ${rescheduleRandomDelay} seconds].`)
+                    eumetsat.logger.info(`   \`~> 'tis about ~${Math.ceil((job.nextInvocation().getTime() - Date.now())/1000/60)} minutes from now.`)
                     eumetsat.logger.info(" ` - - -")
                     eumetsat.logger.info("")
                 });
@@ -470,12 +472,31 @@ class EUMetSatApp
     }
 
     initialize() {
-        this.jobScheduler.scheduleJob('*/1 * * * *', (moment :Date) => {
-            this.logger.info(`Heyloo, 'tis ${moment.toISOString()}`)
+        // For debugging
+        this.jobScheduler.scheduleJob("One minute ticker", '0 */1 * * * *', (moment :Date) => {
+            this.logger.info(`~~> Heyloo, +1 min., 'tis ${moment.toISOString()}`)
         });
 
-        this.jobScheduler.scheduleJob('*/10 * * * *', function(moment :Date) {
-            console.log(`Hola! 'tis ${moment.toISOString()}`)
+        // Output the list of jobs to the logs, every 10 minutes.
+        this.jobScheduler.scheduleJob("Job periodic lister", '0 */10 * * * *', (moment :Date) => {
+            this.logger.info("")
+            this.logger.info("+- - -")
+            this.logger.info(`| Hola! 'tis ${moment.toISOString()}, here's the list of jobs :`)
+            Object.entries(this.jobScheduler.scheduledJobs)
+                .map((pair) => pair[1])
+                .sort((job_a :NodeSchedule.Job, job_b :NodeSchedule.Job) => {
+                    // return job_a.nextInvocation() - job_b.nextInvocation()
+                    // ^ nextInvocation() mays return NULL -_-
+                    const a = job_a.nextInvocation() || new Date(0)
+                    const b = job_b.nextInvocation() || new Date(0)
+                    return a - b
+                })
+                .forEach((job :NodeSchedule.Job, index) => {
+                    const at :Date = job.nextInvocation()
+                    this.logger.info(`| #${index+1}  ${at != null ? at.toISOString() : 'NULL'}  ${job.name}`)
+                })
+            this.logger.info("+- - -")
+            this.logger.info("")
         });
 
         this.eumetsat.launchFetchJobs()
