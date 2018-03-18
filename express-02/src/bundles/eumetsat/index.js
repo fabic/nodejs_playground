@@ -489,7 +489,7 @@ class EUMetSatApp
                     // ^ nextInvocation() mays return NULL -_-
                     const a = job_a.nextInvocation() || new Date(0)
                     const b = job_b.nextInvocation() || new Date(0)
-                    return a - b
+                    return a.getTime() - b.getTime()
                 })
                 .forEach((job :NodeSchedule.Job, index) => {
                     const at :Date = job.nextInvocation()
