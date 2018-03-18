@@ -349,11 +349,30 @@ EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
 
                     // If no file was fetched => resource may not have been updated
                     // on the server => Reschedule a run sometime within this moment
-                    // + one tenth of the update frequency hint.
+                    // and before the next expected update of the resource.
                     if (! meta.mustFetchNewerResource) {
-                        rescheduleRandomDelay = Math.floor(Math.random() * (elt.update_frequency / 10))
+                        const nextUpdateExpectedAt = new Date(Math.ceil((meta.lastModified.getTime() + elt.update_frequency * 1000) /1000/60) *60 *1000)
+
+                        let remainsTilNextUpdate = (nextUpdateExpectedAt.getTime() - moment.getTime()) /1000
+                        eumetsat.logger.info(` \` Next resource update is ${remainsTilNextUpdate} seconds away (${nextUpdateExpectedAt.toISOString()}), computing a reschedule before it occurs.`)
+
+                        if (remainsTilNextUpdate <= 0) {
+                            remainsTilNextUpdate = 15*60
+                            eumetsat.logger.warn(`   \` (!) Next expected resource update is *before* this moment, forcing to ${remainsTilNextUpdate} seconds.`)
+                        }
+
+                        // Prevent rescheduling under 3 minutes
+                        let medianOffset = Math.ceil(remainsTilNextUpdate / 2)
+                        if (medianOffset < 3*60) {
+                            medianOffset = 3*60
+                            eumetsat.logger.warn(`   \` (!) Computed offset is less than 3 minutes (${medianOffset} secs), forcing value.`)
+                        }
+
+                        rescheduleRandomDelay = Math.floor(Math.random() * 60)
                         rescheduleAt = new Date(
-                            Math.ceil(moment.getTime() /1000 /60) *60 *1000 /* Round to the nearest minute. */ )
+                            Math.ceil((moment.getTime() + medianOffset * 1000 + rescheduleRandomDelay * 1000)
+                                /1000 /60) *60 *1000 /* Round to the nearest minute. */ )
+
                         eumetsat.logger.warn(` \` Got no file, last-modified: ${meta.lastModified.toISOString()}`)
                         eumetsat.logger.warn(`   \` Re-scheduling job for '${rescheduleAt.toISOString()}'  [${job.name}]`)
                     }
