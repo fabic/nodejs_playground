@@ -366,10 +366,11 @@ EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
 
                         let medianOffset = Math.ceil(remainsTilNextUpdate / 2)
 
-                        // Prevent rescheduling under 5 minutes
-                        if (medianOffset < 5*60) {
-                            medianOffset = 5*60
-                            eumetsat.logger.warn(`   \` (!) Computed offset is less than 5 minutes (${medianOffset} secs), forcing value.`)
+                        // Prevent rescheduling under 7 minutes (requirement from
+                        // EUMetSat data policy is 15 min.).
+                        if (medianOffset < 7*60) {
+                            medianOffset = 7*60
+                            eumetsat.logger.warn(`   \` (!) Computed offset is less than 7 minutes (${medianOffset} secs), forcing value.`)
                         }
 
                         rescheduleRandomDelay = Math.ceil(Math.random() * 60)
