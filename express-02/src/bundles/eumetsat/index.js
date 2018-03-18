@@ -28,6 +28,15 @@ export function EUMetSat(imagesDirectory :string = ".",
     this.jobScheduler = jobScheduler || NodeSchedule
 
     this.satelliteImagesList = [
+        { id: "MPE_West_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_MPE_WestIndianOcean.png", update_frequency: 15*60, type: "Visualised Products" },
+        { id: "MPE_East_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_MPE_EastIndianOcean.png", update_frequency: 15*60, type: "Visualised Products" },
+        // Nothing to see on these.
+        // { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_FIR_WestIndianOcean.png", update_frequency: 15*60, type: "Visualised Products },
+        // { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_FIR_EastIndianOcean.png", update_frequency: 15*60, type: "Visualised Products },
+        // “Wind gradient arrows drawn on grey map” :
+        // { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_AMV_WestIndianOcean.png", update_frequency: 15*60, type: "Visualised Products },
+        // { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_AMV_EastIndianOcean.png", update_frequency: 15*60, type: "Visualised Products },
+
         { id: "WV_6.2_West_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_WV062_WestIndianOcean.jpg", update_frequency: 3*60*60, type: "Channels" },
         { id: "WV_6.2_East_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_WV062_EastIndianOcean.jpg", update_frequency: 3*60*60, type: "Channels" },
         // { id: "IR_3.9_Color_West_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_IR039Color_WestIndianOcean.jpg", update_frequency: 3*60*60, type: "Channels },
@@ -53,16 +62,6 @@ export function EUMetSat(imagesDirectory :string = ".",
         { id: "RGB_NatColour_East_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBNatColour_EastIndianOcean.jpg", update_frequency: 60*60, type: "RGB Composites" },
         { id: "RGB_SolarDay_West_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBSolarDay_WestIndianOcean.jpg", update_frequency: 60*60, type: "RGB Composites" },
         { id: "RGB_SolarDay_East_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBSolarDay_EastIndianOcean.jpg", update_frequency: 60*60, type: "RGB Composites" },
-
-        { id: "MPE_West_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_MPE_WestIndianOcean.png", update_frequency: 15*60, type: "Visualised Products" },
-        { id: "MPE_East_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_MPE_EastIndianOcean.png", update_frequency: 15*60, type: "Visualised Products" },
-
-        // Nothing to see on these.
-        // { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_FIR_WestIndianOcean.png", update_frequency: 15*60, type: "Visualised Products },
-        // { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_FIR_EastIndianOcean.png", update_frequency: 15*60, type: "Visualised Products },
-        // “Wind gradient arrows drawn on grey map” :
-        // { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_AMV_WestIndianOcean.png", update_frequency: 15*60, type: "Visualised Products },
-        // { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_AMV_EastIndianOcean.png", update_frequency: 15*60, type: "Visualised Products },
     ]
 }
 
@@ -97,11 +96,11 @@ EUMetSat.prototype.probeResourceAt = function _eumetsat_probe_res(url :string)
             this.logger.debug(`HEADERS: ${JSON.stringify(res.headers)}`);
 
             res.on('data', (chunk) => {
-                this.logger.warn("Huh! we shall NOT receive any data as part of a HEAD HTTP request !")
+                this.logger.error("Huh! we shall NOT receive any data as part of a HEAD HTTP request !")
             });
 
             res.on('end', () => {
-                this.logger.info(`EUMetSat.probeResourceAt(): Done fetching headers for the resource at ${url}`);
+                this.logger.debug(` \` Got HTTP headers for resource at '${url}'.  [EUMetSat.probeResourceAt()]`);
                 let headers = Object.assign({
                     _url: _url,
                     _fileName: _url.pathname.substr(_url.pathname.lastIndexOf('/')+1) ||
@@ -112,7 +111,7 @@ EUMetSat.prototype.probeResourceAt = function _eumetsat_probe_res(url :string)
         });
 
         req.on('error', (e) => {
-            this.logger.error(`EUMetSat.probeResourceAt(): Problem with request: ${e.message}`);
+            this.logger.error(` \` Problem with request: ${e.message}  [EUMetSat.probeResourceAt()]`);
             reject(e)
         });
 
@@ -147,16 +146,16 @@ EUMetSat.prototype.fetchResourceAt = function _eumetsat_fetch_res(url :string,
             }
         };
 
-        // Infer file name from the resource url.
+        // Infer file name from the resource url in case it wasn't specified.
         saveFileName = saveFileName || (this.imagesDirectory + PATHSEP
             + (options.path.substr(options.path.lastIndexOf('/') + 1) ||
                 "_eumetsat_fetch_error_couldnt_infer_image_filename"))
 
         const req = http.request(options, (res) => {
-            this.logger.info(`EUMetSat.fetchResourceAt(): Fetching resource at ${url}, saving to file '${saveFileName}'.`)
-            this.logger.debug(`STATUS: ${res.statusCode}`);
-            this.logger.debug(`HEADERS: ${JSON.stringify(res.headers)}`);
-            this.logger.info(`EUMetSat.fetchResourceAt(): Creating file '${saveFileName}'.`)
+            this.logger.info(` \` Fetching resource at ${url}, saving to file '${saveFileName}'.  [EUMetSat.fetchResourceAt()]`)
+            this.logger.debug(` \` STATUS: ${res.statusCode}`);
+            this.logger.debug(` \` HEADERS: ${JSON.stringify(res.headers)}`);
+            this.logger.info(` \` Creating file '${saveFileName}'.  [EUMetSat.fetchResourceAt()]`)
 
             const file = fs.createWriteStream(saveFileName, { encoding: 'binary' })
 
@@ -164,11 +163,11 @@ EUMetSat.prototype.fetchResourceAt = function _eumetsat_fetch_res(url :string,
 
             res.on('data', (chunk) => {
                 file.write(chunk, 'binary')
-                this.logger.debug(`EUMetSat.fetchResourceAt(): Writing chunk to file ${saveFileName}...`)
+                this.logger.debug(` \` Writing chunk to file ${saveFileName}...  [EUMetSat.fetchResourceAt()]`)
             });
 
             res.on('end', () => {
-                this.logger.debug('No more data in response.');
+                this.logger.debug(' \` No more data in response. [EUMetSat.fetchResourceAt()]');
                 resolve(file)
             });
         });
@@ -190,8 +189,8 @@ EUMetSat.prototype.fetchResourceAt = function _eumetsat_fetch_res(url :string,
 EUMetSat.prototype.fetch = function _eumetsat_fetch(url :string) {
     this.logger.info(`EUMetSat.fetch('${url}') : BEGIN`)
     return this.probeResourceAt(url)
-    // #1 : Infer a target on-disk file name based on the resource headers.
-    //      Returns a "metadata" map (object).
+        // #1 : Infer a target on-disk file name based on the resource headers.
+        //      Returns a "metadata" map (object).
         .then((headers: Object) => {
             const lastModified = new Date( headers['last-modified'] )
             const lastDotAt = headers._fileName.lastIndexOf('.')
@@ -201,6 +200,7 @@ EUMetSat.prototype.fetch = function _eumetsat_fetch(url :string) {
                 // Etag comes enclosed within double-quotes, remove these.
                 + '_' + headers['etag'].substr(1, headers['etag'].length-2)
                 + saveFileNameExt
+
             let meta = {
                 saveFileName: saveFileName,
                 saveFileNameExt: saveFileNameExt,
@@ -212,6 +212,10 @@ EUMetSat.prototype.fetch = function _eumetsat_fetch(url :string) {
                 stats: null,
                 file: null
             }
+
+            delete headers._url
+            delete headers._fileName
+
             return meta
         })
         // #2 : Find out if a file already exist on-disk
@@ -227,8 +231,10 @@ EUMetSat.prototype.fetch = function _eumetsat_fetch(url :string) {
                         resolve(meta)
                     }
                     // We do not expect any other form of error from stat()
-                    else if (err)
-                        reject( err )
+                    else if (err) {
+                        this.logger.error(`EUMetSat.fetch('${url}') : Failure while stat-ing file '${meta.saveFileName}'.`)
+                        reject(err)
+                    }
                     // Else file exists and we need to test if it has the same
                     // size and Etag of the remote resource.
                     else {
@@ -248,7 +254,9 @@ EUMetSat.prototype.fetch = function _eumetsat_fetch(url :string) {
                         return meta
                     })
             }
-            else return meta
+            else {
+                return meta
+            }
         })
         // #4 : Drop a few lines through the log for information.
         .then((meta :Object) => {
@@ -256,7 +264,7 @@ EUMetSat.prototype.fetch = function _eumetsat_fetch(url :string) {
             return meta
         })
         .finally(() => {
-            this.logger.info(`EUMetSat.fetch('${url}') : END.`)
+            this.logger.debug(`EUMetSat.fetch('${url}') : END.`)
         })
 } // _eumetsat_fetch //
 
@@ -281,6 +289,10 @@ EUMetSat.prototype.fetchAll = function _eumetsat_fetch_all() {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+/**
+ *
+ * @returns {Promise<any>}
+ */
 EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
 {
     return new Promise((resolve, reject) => {
@@ -289,42 +301,102 @@ EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
         let i = 1
         for(const elt of this.satelliteImagesList) {
             const jobName = `EUMetSat ${elt.id}`
-            const firstRunAt = new Date( Date.now() + i*10*1000 )
+            const firstRunAt = new Date( Date.now() + i*15*1000 )
             const eumetsat = this
 
             let lastScheduledJobAt = new Date()
 
-            const job = this.jobScheduler.scheduleJob(jobName, firstRunAt, async function(moment :Date) {
-                const job = this
+            const job = this.jobScheduler.scheduleJob(jobName, firstRunAt,
+                async function (moment: Date) {
+                    const job = this
 
-                eumetsat.logger.info(`EUMetSat job '${job.name}' : Go [${moment.toISOString()}]`)
+                    eumetsat.logger.info(`EUMetSat job '${job.name}' : BEGIN  [${moment.toISOString()}]`)
 
-                let meta = await eumetsat.fetch(elt.url)
+                    let meta = null
+                    let rescheduleAt = null
+                    let rescheduleRandomDelay = 0
 
-                const rescheduleAt = new Date(
-                    Math.ceil(
-                        (meta.lastModified.getTime() + elt.update_frequency * 1000
-                            // Randomize within one tenth of the element update frequency hint.
-                            + Math.floor(Math.random() * elt.update_frequency/10*1000))
-                                /1000 /60
-                    ) * 60 * 1000
-                )
+                    try {
+                        meta = await eumetsat.fetch(elt.url)
+                    }
+                    /* EUMetSat.fetch() does not catch errors, typically these
+                     * are inet connectivity problems like DNS resolution, connection
+                     * refused or whatever.
+                     *
+                     * => Hence we're rescheduling this job to run shortly.
+                     *
+                     * TODO: See if we need to care about non-inet related errors
+                     * TODO: like for ex. file creation/write errors (e.g. disk space exhaustion).
+                     * TODO: Or may handle non-inet error as fatal, either here or within fetch*() ?
+                     */
+                    catch(ex) {
+                        rescheduleRandomDelay = Math.floor(Math.random() * 10)
+                        rescheduleAt = new Date(
+                            Math.ceil(
+                                (moment.getTime() + 5*1000 + rescheduleRandomDelay * 1000)
+                                / 1000 / 60
+                            ) * 60 * 1000
+                        )
 
-                // Prevent two consecutive jobs from being scheduled at the exact
-                // same moment (fixme: very basic impl.)
-                if (rescheduleAt === lastScheduledJobAt) {
-                    rescheduleAt.setTime(
-                        rescheduleAt.getTime() + Math.floor(Math.random() * 60*1000)
-                    )
-                }
+                        let reschedOk = job.reschedule(rescheduleAt) === true
 
-                let ok = job.reschedule(rescheduleAt) === true
-                assert(ok, `Whoops! Failed to re-schedule job ${job.name} ! [EUMetSat.launchFetchJobs()]`)
+                        eumetsat.logger.warn(`(!) Ouch! Caught exception thrown from within EUMetSat.fetch().  [Job: ${job.name}]`)
+                        eumetsat.logger.warn(`(!) \` Re-scheduling job ${job.name} rescheduled for '${job.nextInvocation().toISOString()}'.`)
 
-                lastScheduledJobAt = rescheduleAt
+                        assert(reschedOk, `Whoops! Failed to re-schedule job ${job.name} for '${rescheduleAt.toISOString()}' ! [EUMetSat.launchFetchJobs()]`)
+                        return
+                    }
 
-                eumetsat.logger.info(`Job ${job.name} rescheduled for '${job.nextInvocation().toISOString()}'.`)
-            });
+                    // If no file was fetched => resource may not have been updated
+                    // on the server => Reschedule a run sometime within this moment
+                    // + one tenth of the update frequency hint.
+                    if (! meta.mustFetchNewerResource) {
+                        rescheduleRandomDelay = Math.floor(Math.random() * (elt.update_frequency / 10)) * 1000
+                        rescheduleAt = new Date(
+                            Math.ceil((moment.getTime() + rescheduleRandomDelay)
+                                /1000 /60) *60 *1000 /* Round to the nearest minute. */ )
+                        eumetsat.logger.warn(` \` Got no file, last-modified: ${meta.lastModified.toISOString()}`)
+                        eumetsat.logger.warn(`   \` Re-scheduling job for '${rescheduleAt.toISOString()}'  [${job.name}]`)
+                    }
+                    // Ok, we fetched the newer resource, reschedule based on the update frequency hint.
+                    else {
+                        assert(meta.file != null)
+                        eumetsat.logger.info(` \` Got new file '${meta.saveFileName}', last-modified: ${meta.lastModified.toISOString()}`)
+                        // Randomize within one tenth of the element update frequency hint.
+                        rescheduleRandomDelay = Math.floor(Math.random() * elt.update_frequency / 10 * 1000)
+                        rescheduleAt = new Date(
+                            Math.ceil((meta.lastModified.getTime()
+                                        + elt.update_frequency * 1000
+                                        + rescheduleRandomDelay)
+                                            /1000 /60) *60 *1000)
+                    }
+
+                    // It may happen that the job was re-scheduled "in the past",
+                    // typically on the first job-runs where we're probing/fetching
+                    // resources "out-of-sync".
+                    if (rescheduleAt <= moment) {
+                        rescheduleRandomDelay = Math.floor(Math.random() * 10) * 1000
+                        rescheduleAt = new Date(
+                            Math.ceil((moment.getTime() + 5*1000 + rescheduleRandomDelay)
+                                /1000 /60) *60 *1000)
+                        eumetsat.logger.warn(` \` Had to re-schedule job ${job.name} so that it runs shortly.`)
+                    }
+
+                    // Prevent two consecutive jobs from being scheduled at the exact
+                    // same moment (fixme: very basic impl.)
+                    if (rescheduleAt === lastScheduledJobAt) {
+                        rescheduleRandomDelay = Math.floor(Math.random() * 60 * 1000);
+                        rescheduleAt.setTime(rescheduleAt.getTime() + rescheduleRandomDelay)
+                        eumetsat.logger.warn(` \` Had to delay this job a little bit  [${job.name}]`)
+                    }
+
+                    let ok = job.reschedule(rescheduleAt) === true
+                    assert(ok, `Whoops! Failed to re-schedule job ${job.name} for '${rescheduleAt.toISOString()}' ! [EUMetSat.launchFetchJobs()]`)
+
+                    lastScheduledJobAt = rescheduleAt
+
+                    eumetsat.logger.info(`\` Ok, job ${job.name} rescheduled for '${job.nextInvocation().toISOString()}'.`)
+                });
 
             this.logger.info(`EUMetSat: Scheduled first job '${job.name}' at ${job.nextInvocation().toISOString()}.`)
 
