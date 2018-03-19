@@ -21,6 +21,7 @@ export function IndexPage(router: Function) {
     let eumetsat: EUMetSat = app.get('eumetsat')
 
     // todo: refactor as part of EUMetSat.
+    // todo: ^ done: refactor here now.
     const public_dir = app.get('app.public')
     const imageFiles = Finder.findSync(eumetsat.imagesDirectory, /\.(jpg|png)$/)
       .map((item :Object) => {

@@ -2,6 +2,8 @@
 
 'use strict'
 
+import {Finder} from "../../misc/finder";
+
 const assert = require('assert')
 const fs     = require('fs')
 const http   = require('http')
@@ -538,7 +540,59 @@ EUMetSat.prototype.logJobList = function _eumetsat_log_job_list() {
     })
   this.logger.info("+- - -")
   this.logger.info("")
-}
+} // _eumetsat_log_job_list() //
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+EUMetSat.prototype.getAllOnDiskImages = function _eumetsat_get_all_images() : {images:[], latest:{}, types:{}} {
+  const cwd = process.cwd() + PATHSEP
+
+  // All images, sorted by type and date-time
+  const imageFiles = Finder.findSync(this.imagesDirectory, /\.(jpg|png)$/)
+    .map((item :Object) => {
+      // todo: strip off curr. dir.
+      item.path = item.path.substr(cwd.length)
+      item.fileName = item.path.substr(item.path.lastIndexOf('/') + 1)
+
+      // Extract metadata from the file name.
+      const [_a, _b, type, region, date, ...rest] = item.fileName.split('_', 6)
+      item.meta = {
+        date: new Date(date),
+        type, region, rest,
+        _a, _b,
+        prefix: _a +' '+ _b +' '+ type +' '+ region
+      }
+
+      return item
+    })
+    // Sort files per date-time, newest first.
+    .sort((item_a :Object, item_b :Object) => {
+      const x = item_a.meta.prefix.localeCompare(item_b.meta.prefix)
+      if (x != 0) return x
+      else return (item_a.meta.date.getTime() - item_b.meta.date.getTime())
+    })
+
+  let imagesTypes = {}
+  let latestImagesByType = {}
+
+  // Partition files by EUMetSat "type", and also select the latest images.
+  for(let item of imageFiles)
+  {
+    const type = item.meta.type +' '+ item.meta.region
+    if (! (type in imagesTypes))
+      imagesTypes[ type ] = []
+    imagesTypes[ type ].push(item)
+
+    if (! (type in latestImagesByType))
+      latestImagesByType[ type ] = item
+  }
+
+  return {
+    images: imageFiles,
+    latest: latestImagesByType,
+    types: imagesTypes,
+  }
+} // _eumetsat_log_job_list() //
 
 
 // - -
@@ -647,5 +701,7 @@ export class EUMetSatApp {
 export function EUMetSatBundle(app: Function, path: string = '/EUMetSat') {
   return new EUMetSatApp(app, path)
 }
+
+export default EUMetSat
 
 // EOF //
