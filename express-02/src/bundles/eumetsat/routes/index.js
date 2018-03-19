@@ -5,7 +5,7 @@
  * @flow
  */
 
-import { EUMetSat } from "../index";
+import {EUMetSat} from "../index";
 
 /**
  * The index/home page.
@@ -13,14 +13,17 @@ import { EUMetSat } from "../index";
  * @param router
  * @constructor
  */
-export function IndexPage(router :Function) {
-    router.get(/^.*$/, function(req, res, next) {
-        let app = req.app
+export function IndexPage(router: Function) {
+  router.get(/^.*$/, function (req, res, next) {
+    let app = req.app
 
-        let eumetsat :EUMetSat = app.get('eumetsat').EUMetSat()
+    let eumetsat: EUMetSat = app.get('eumetsat').EUMetSat()
 
-        res.render('EUMetSat/index.html.njk', {
-            title: 'Hello hello ?'
-        })
+    res.render('EUMetSat/index.html.njk', {
+      title: 'Hello hello ?',
+      images: [
+        // todo...
+      ]
     })
+  })
 }
