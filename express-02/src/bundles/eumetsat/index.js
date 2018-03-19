@@ -11,6 +11,7 @@ import { URL }            from 'url'
 import { sep as PATHSEP } from 'path'
 
 // module.exports = EUMetSat
+// ^ Note: We're using the fancy new ES6 export keyword.
 
 /**
  *
@@ -27,46 +28,76 @@ export function EUMetSat(imagesDirectory :string = ".",
     this.logger = logger || console
     this.jobScheduler = jobScheduler || NodeSchedule
 
+    /**
+     * “Database” of those satellite image resources out there.
+     *
+     * @type {Object[]}
+     */
     this.satelliteImagesList = [
+        /* ~15 minutes update interval */
         { id: "MPE_West_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_MPE_WestIndianOcean.png", update_frequency: 15*60, type: "Visualised Products" },
         { id: "MPE_East_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_MPE_EastIndianOcean.png", update_frequency: 15*60, type: "Visualised Products" },
         // Nothing to see on these.
-        // { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_FIR_WestIndianOcean.png", update_frequency: 15*60, type: "Visualised Products },
-        // { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_FIR_EastIndianOcean.png", update_frequency: 15*60, type: "Visualised Products },
+        { id: "FIR_WestIndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_FIR_WestIndianOcean.png", update_frequency: 15*60, type: "Visualised Products" },
+        { id: "FIR_EastIndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_FIR_EastIndianOcean.png", update_frequency: 15*60, type: "Visualised Products" },
         // “Wind gradient arrows drawn on grey map” :
-        // { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_AMV_WestIndianOcean.png", update_frequency: 15*60, type: "Visualised Products },
-        // { url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_AMV_EastIndianOcean.png", update_frequency: 15*60, type: "Visualised Products },
+        { id: "AMV_WestIndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_AMV_WestIndianOcean.png", update_frequency: 15*60, type: "Visualised Products" },
+        { id: "AMV_EastIndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_AMV_EastIndianOcean.png", update_frequency: 15*60, type: "Visualised Products" },
 
-        { id: "WV_6.2_West_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_WV062_WestIndianOcean.jpg", update_frequency: 3*60*60, type: "Channels" },
-        { id: "WV_6.2_East_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_WV062_EastIndianOcean.jpg", update_frequency: 3*60*60, type: "Channels" },
-        // { id: "IR_3.9_Color_West_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_IR039Color_WestIndianOcean.jpg", update_frequency: 3*60*60, type: "Channels },
-        // { id: "IR_3.9_Color_East_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_IR039Color_EastIndianOcean.jpg", update_frequency: 3*60*60, type: "Channels },
-        { id: "IR_10.8_Color_West_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_IR108Color_WestIndianOcean.jpg", update_frequency: 3*60*60, type: "Channels" },
-        { id: "IR_10.8_Color_East_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_IR108Color_EastIndianOcean.jpg", update_frequency: 3*60*60, type: "Channels" },
-        // { id: "VIS006Color_West_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_VIS006Color_WestIndianOcean.jpg", update_frequency: 3*60*60, type: "Channels },
-        // { id: "VIS006Color_East_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_VIS006Color_EastIndianOcean.jpg", update_frequency: 3*60*60, type: "Channels },
+        /* 3 hours update interval */
+        { id: "WV_6.2_West_IndianOcean",        url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_WV062_WestIndianOcean.jpg",       update_frequency: 3*60*60, type: "Channels" },
+        { id: "WV_6.2_East_IndianOcean",        url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_WV062_EastIndianOcean.jpg",       update_frequency: 3*60*60, type: "Channels" },
+        { id: "IR_3.9_Color_West_IndianOcean",  url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_IR039Color_WestIndianOcean.jpg",  update_frequency: 3*60*60, type: "Channels" },
+        { id: "IR_3.9_Color_East_IndianOcean",  url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_IR039Color_EastIndianOcean.jpg",  update_frequency: 3*60*60, type: "Channels" },
+        { id: "IR_10.8_Color_West_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_IR108Color_WestIndianOcean.jpg",  update_frequency: 3*60*60, type: "Channels" },
+        { id: "IR_10.8_Color_East_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_IR108Color_EastIndianOcean.jpg",  update_frequency: 3*60*60, type: "Channels" },
+        { id: "VIS006Color_West_IndianOcean",   url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_VIS006Color_WestIndianOcean.jpg", update_frequency: 3*60*60, type: "Channels" },
+        { id: "VIS006Color_East_IndianOcean",   url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_VIS006Color_EastIndianOcean.jpg", update_frequency: 3*60*60, type: "Channels" },
 
-        { id: "RGB_Airmass_West_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBAirmass_WestIndianOcean.jpg", update_frequency: 60*60, type: "RGB Composites" },
-        { id: "RGB_Airmass_East_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBAirmass_EastIndianOcean.jpg", update_frequency: 60*60, type: "RGB Composites" },
-        { id: "RGB_Ash_West_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBAsh_WestIndianOcean.jpg", update_frequency: 60*60, type: "RGB Composites" },
-        { id: "RGB_Ash_East_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBAsh_EastIndianOcean.jpg", update_frequency: 60*60, type: "RGB Composites" },
-        // { id: "RGB_Convection_West_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBConvection_WestIndianOcean.jpg", update_frequency: 60*60, type: "RGB Composites },
-        // { id: "RGB_Convection_East_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBConvection_EastIndianOcean.jpg", update_frequency: 60*60, type: "RGB Composites },
-        // { id: "RGB_Dust_West_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBDust_WestIndianOcean.jpg", update_frequency: 60*60, type: "RGB Composites },
-        // { id: "RGB_Dust_East_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBDust_EastIndianOcean.jpg", update_frequency: 60*60, type: "RGB Composites },
-        // { id: "RGB_Fog_West_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBFog_WestIndianOcean.jpg", update_frequency: 60*60, type: "RGB Composites },
-        // { id: "RGB_Fog_East_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBFog_EastIndianOcean.jpg", update_frequency: 60*60, type: "RGB Composites },
+        /* 1 hour update interval */
+        { id: "RGB_Airmass_West_IndianOcean",      url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBAirmass_WestIndianOcean.jpg",      update_frequency: 60*60, type: "RGB Composites" },
+        { id: "RGB_Airmass_East_IndianOcean",      url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBAirmass_EastIndianOcean.jpg",      update_frequency: 60*60, type: "RGB Composites" },
+        { id: "RGB_Ash_West_IndianOcean",          url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBAsh_WestIndianOcean.jpg",          update_frequency: 60*60, type: "RGB Composites" },
+        { id: "RGB_Ash_East_IndianOcean",          url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBAsh_EastIndianOcean.jpg",          update_frequency: 60*60, type: "RGB Composites" },
+        { id: "RGB_Convection_West_IndianOcean",   url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBConvection_WestIndianOcean.jpg",   update_frequency: 60*60, type: "RGB Composites" },
+        { id: "RGB_Convection_East_IndianOcean",   url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBConvection_EastIndianOcean.jpg",   update_frequency: 60*60, type: "RGB Composites" },
+        { id: "RGB_Dust_West_IndianOcean",         url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBDust_WestIndianOcean.jpg",         update_frequency: 60*60, type: "RGB Composites" },
+        { id: "RGB_Dust_East_IndianOcean",         url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBDust_EastIndianOcean.jpg",         update_frequency: 60*60, type: "RGB Composites" },
+        { id: "RGB_Fog_West_IndianOcean",          url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBFog_WestIndianOcean.jpg",          update_frequency: 60*60, type: "RGB Composites" },
+        { id: "RGB_Fog_East_IndianOcean",          url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBFog_EastIndianOcean.jpg",          update_frequency: 60*60, type: "RGB Composites" },
         { id: "RGB_Microphysics_West_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBMicrophysics_WestIndianOcean.jpg", update_frequency: 60*60, type: "RGB Composites" },
         { id: "RGB_Microphysics_East_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBMicrophysics_EastIndianOcean.jpg", update_frequency: 60*60, type: "RGB Composites" },
-        { id: "RGB_NatColour_West_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBNatColour_WestIndianOcean.jpg", update_frequency: 60*60, type: "RGB Composites" },
-        { id: "RGB_NatColour_East_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBNatColour_EastIndianOcean.jpg", update_frequency: 60*60, type: "RGB Composites" },
-        { id: "RGB_SolarDay_West_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBSolarDay_WestIndianOcean.jpg", update_frequency: 60*60, type: "RGB Composites" },
-        { id: "RGB_SolarDay_East_IndianOcean", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBSolarDay_EastIndianOcean.jpg", update_frequency: 60*60, type: "RGB Composites" },
+        { id: "RGB_NatColour_West_IndianOcean",    url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBNatColour_WestIndianOcean.jpg",    update_frequency: 60*60, type: "RGB Composites" },
+        { id: "RGB_NatColour_East_IndianOcean",    url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBNatColour_EastIndianOcean.jpg",    update_frequency: 60*60, type: "RGB Composites" },
+        { id: "RGB_SolarDay_West_IndianOcean",     url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBSolarDay_WestIndianOcean.jpg",     update_frequency: 60*60, type: "RGB Composites" },
+        { id: "RGB_SolarDay_East_IndianOcean",     url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBSolarDay_EastIndianOcean.jpg",     update_frequency: 60*60, type: "RGB Composites" },
+    ] // EUMetSat.satelliteImagesList[] //
+
+    /** List of image IDs we do not want to download.
+     * TODO: Have this be an option or config. value, for e.g. /config/index.js ?
+     * @type {string[]}
+     */
+    this.skipImagesList = [
+                                                      "MPE_East_IndianOcean",
+        "FIR_WestIndianOcean",                         "FIR_EastIndianOcean",
+        "AMV_WestIndianOcean",                         "AMV_EastIndianOcean",
+        "IR_3.9_Color_West_IndianOcean",     "IR_3.9_Color_East_IndianOcean",
+                                              "RGB_Airmass_East_IndianOcean",
+                                                  "RGB_Ash_East_IndianOcean",
+        "VIS006Color_West_IndianOcean",       "VIS006Color_East_IndianOcean",
+        "RGB_Convection_West_IndianOcean", "RGB_Convection_East_IndianOcean",
+        "RGB_Dust_West_IndianOcean",             "RGB_Dust_East_IndianOcean",
+        "RGB_Fog_West_IndianOcean",               "RGB_Fog_East_IndianOcean",
+                                         "RGB_Microphysics_East_IndianOcean",
+                                             "RGB_SolarDay_East_IndianOcean",
     ]
-}
+} // EUMetSat ctor //
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 /**
- * Issue a HEAD request for the given resource located at `url`.
+ * Issue a HEAD request for the given resource located at `url`. Returns a
+ * promise that resolve with the HTTP headers.
  *
  * @param url {string}
  * @returns {Promise<any>}
@@ -122,7 +153,11 @@ EUMetSat.prototype.probeResourceAt = function _eumetsat_probe_res(url :string)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 /**
- * Download the resource at `url`
+ * Download the resource at `url`. Returns a promise that resolve with a
+ * `fs.WriteStream` “file” (todo: which is rather useless, fix?)
+ *
+ * todo: The file, wits. the "fs.WriteStream” default to « auto-close »,
+ * todo: which is absurd for us => see how we may force the closing of that WriteStream thing.
  *
  * @param url {string}
  * @param saveFileName {string}
@@ -186,6 +221,15 @@ EUMetSat.prototype.fetchResourceAt = function _eumetsat_fetch_res(url :string,
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+/**
+ * Fetch the resource at URL __if needed__ : Probe it first, see if we have it
+ * on-disk, fetch if not.  Returns a promise that resolve with a loosely typed
+ * hashmap (here named “meta”) about the resource, like HTTP headers, on-disk
+ * filename, etc.
+ *
+ * @param url
+ * @returns {Promise<any>}
+ */
 EUMetSat.prototype.fetch = function _eumetsat_fetch(url :string) {
     this.logger.info(`EUMetSat.fetch('${url}') : BEGIN`)
     return this.probeResourceAt(url)
@@ -270,6 +314,11 @@ EUMetSat.prototype.fetch = function _eumetsat_fetch(url :string) {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+/**
+ * todo: impl. needs review <= used by the CLI progr.
+ *
+ * @returns {Promise<any>}
+ */
 EUMetSat.prototype.fetchAll = function _eumetsat_fetch_all() {
     return new Promise(async (resolve, reject) => {
         this.logger.info(`EUMetSat.fetchAll() : BEGIN`)
@@ -290,6 +339,10 @@ EUMetSat.prototype.fetchAll = function _eumetsat_fetch_all() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 /**
+ * Launch recurring jobs that fetch resources and automatically re/schedule
+ * themselves for fetching at the next resource update.
+ *
+ * * Uses package `node-scheduller`
  *
  * @returns {Promise<any>}
  */
@@ -301,6 +354,12 @@ EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
         let i = 1
         for(const elt of this.satelliteImagesList)
         {
+            // Skip list
+            if (this.skipImagesList.includes( elt.id )) {
+                this.logger.info(`~~> Skipping resource '${elt.id}'  [EUMetSat.launchFetchJobs()]`)
+                continue
+            }
+
             const jobName = `EUMetSat ${elt.id}`
             const firstRunAt = new Date( Date.now() + i*15*1000 + Math.ceil(Math.random() * 10))
             const eumetsat = this
@@ -437,9 +496,12 @@ EUMetSat.prototype.launchFetchJobs = function _eumetsat_launch_fetch_jobs()
             this.logger.info(`EUMetSat: Scheduled first job '${job.name}' at ${job.nextInvocation().toISOString()}.`)
 
             i++
-        }
+        } // loop over EUMetSat.satelliteImagesList[] elements. //
 
         resolve(true)
+        // todo: ^ decide whether we should keep things in a Promise here, and
+        // todo: if there's something valuable we might return, or maybe try-catch
+        // todo: any exception so that there's no way it bubbles up to kill the Node.js instance ?
     })
 } // _eumetsat_launch_fetch_jobs //
 
@@ -475,10 +537,11 @@ EUMetSat.prototype.logJobList = function _eumetsat_log_job_list() {
 
 
 /**
- * EUMetSat express app. bundle.
+ * EUMetSat express app. bundle, see `src/app.js` from whence this gets used to
+ * set things up _within the context of a long-standing Express app_.
  *
  * @author fabic.net
- * @since 2018-02-02
+ * @since 2018-03-16
  */
 class EUMetSatApp
 {
@@ -536,7 +599,24 @@ class EUMetSatApp
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-export function EUMetSatBundle(app :Function, path :string) {
+/**
+ * To be invoked from `src/app.js` with for ex. :
+ *
+ *     require('./bundles/eumetsat')(app, '/EUMetSat')
+ *
+ * Or:
+ * 
+ *     import { EUMetSatBundle } from "./bundles/eumetsat"
+ *     EUMetSatBundle(app, '/EUMetSat')
+ *
+ * @constructor
+ *
+ * @param app {Function} The Express app instance.
+ * @param path {string}  The base URL.
+ *
+ * @returns {EUMetSatApp}
+ */
+export function EUMetSatBundle(app :Function, path :string = '/EUMetSat') {
     return new EUMetSatApp(app, path)
 }
 
