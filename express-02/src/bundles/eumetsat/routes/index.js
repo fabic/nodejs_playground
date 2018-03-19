@@ -6,6 +6,7 @@
  */
 
 import {EUMetSat} from "../index";
+import { Finder } from "../../../misc/finder"
 
 /**
  * The index/home page.
@@ -17,13 +18,20 @@ export function IndexPage(router: Function) {
   router.get(/^.*$/, function (req, res, next) {
     let app = req.app
 
-    let eumetsat: EUMetSat = app.get('eumetsat').EUMetSat()
+    let eumetsat: EUMetSat = app.get('eumetsat')
+
+    // todo: refactor as part of EUMetSat.
+    const public_dir = app.get('app.public')
+    const imageFiles = Finder.findSync(eumetsat.imagesDirectory, /\.(jpg|png)$/)
+      .map((item :Object) => {
+        item.path = item.path.substr(public_dir.length)
+        item.fileName = item.path.substr(item.path.lastIndexOf('/') + 1)
+        return item
+      })
 
     res.render('EUMetSat/index.html.njk', {
       title: 'Hello hello ?',
-      images: [
-        // todo...
-      ]
+      images_list: imageFiles,
     })
   })
 }

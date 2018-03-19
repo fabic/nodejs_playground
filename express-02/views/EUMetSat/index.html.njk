@@ -10,4 +10,12 @@
       {{ error }}
     </div>
   {% endif %}
+
+  <ul>
+  {% for file in images_list %}
+    <li>
+        <a href="{{ file.path }}">{{ file.fileName }}</a>
+    </li>
+  {% endfor %}
+  </ul>
 {% endblock content %}

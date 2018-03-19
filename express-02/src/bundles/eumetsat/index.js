@@ -550,6 +550,8 @@ export class EUMetSatApp {
   jobScheduler: Object
   eumetsat: EUMetSat
 
+  get EUMetSat() :EUMetSat { return this.eumetsat }
+
   /**
    * CONSTRUCTOR
    *
@@ -557,7 +559,6 @@ export class EUMetSatApp {
    * @param path  The base URL under which to file route handlers.
    */
   constructor(app: Function, path: string) {
-    app.set('eumetsat', this)
     app.use(path, EUMetSatApp.Router())
     this.logger = app.get('app.logger')
     this.jobScheduler = NodeSchedule
@@ -565,6 +566,7 @@ export class EUMetSatApp {
     const eumetsat_config = app.get('app.config')['EUMetSat'];
     const images_dir = eumetsat_config['images_dir'] || "."
     this.eumetsat = new EUMetSat(images_dir, this.logger, this.jobScheduler)
+    app.set('eumetsat', this.eumetsat)
 
     this.logger.info("Ich bin EUMetSatApp !")
     this.logger.info(` \` images directory: ${images_dir}`)
