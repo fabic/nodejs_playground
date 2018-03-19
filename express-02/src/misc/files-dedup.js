@@ -25,7 +25,7 @@ export function Dedup() {
  * @returns {{files: File[], subsets: Array}}
  */
 Dedup.find = function _dedup_find(rootdir :string, regx :RegExp) {
-  let files = Finder.find(rootdir, regx)
+  let files = Finder.findSync(rootdir, regx)
 
   //cli.info("Got " + files.length + " files. Sorting by size now.")
 

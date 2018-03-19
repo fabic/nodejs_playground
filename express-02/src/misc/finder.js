@@ -40,7 +40,7 @@ type File = {path: string, stats: fs.Stats, id: string, hash: ?string}
  * @param  regx  {RegExp}
  * @return {Array}  a collection of {path: ..., stats: fs.Stats}.
  */
-Finder.find = function _finder_find(dir :string, regx :RegExp) : File[]
+Finder.findSync = function _finder_find(dir :string, regx :RegExp) : File[]
 {
   regx = regx || /./
 
@@ -48,7 +48,7 @@ Finder.find = function _finder_find(dir :string, regx :RegExp) : File[]
   let queue = []
   let collect :File[] = []
 
-  cli.info("BEGIN: find('" + dir + "', " + regx.toString() + ").")
+  cli.info("BEGIN: findSync('" + dir + "', " + regx.toString() + ").")
 
   queue.unshift({path: dir})
 
@@ -124,7 +124,7 @@ Finder.find = function _finder_find(dir :string, regx :RegExp) : File[]
   } // iteration over the queue. //
 
   process.stdout.write("\n")
-  cli.ok("END: find('" + dir + "', " + regx.toString() + ").")
+  cli.ok("END: findSync('" + dir + "', " + regx.toString() + ").")
   cli.ok("     Got " + collect.length + " files.")
 
   return collect
