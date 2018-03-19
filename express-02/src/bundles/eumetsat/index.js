@@ -10,6 +10,10 @@ const NodeSchedule = require('node-schedule')
 import { URL }            from 'url'
 import { sep as PATHSEP } from 'path'
 
+import { Router as ExpressRouter } from 'express'
+import { IndexPage }               from './routes/index'
+
+
 // module.exports = EUMetSat
 // ^ Note: We're using the fancy new ES6 export keyword.
 
@@ -570,28 +574,23 @@ class EUMetSatApp
             this.eumetsat.logJobList()
         });
 
-        this.eumetsat.launchFetchJobs()
-            .then(() => {
-                this.eumetsat.logJobList()
-            })
-            .finally(() => {
-                this.logger.info("EUMetSatApp.initialize(): done.")
-                this.logger.info("")
-            })
-        // todo: handle the returned promise ?
+        if (false) {
+            this.eumetsat.launchFetchJobs()
+                .then(() => {
+                    this.eumetsat.logJobList()
+                })
+                .finally(() => {
+                    this.logger.info("EUMetSatApp.initialize(): done.")
+                    this.logger.info("")
+                })
+            // todo: handle the returned promise ?
+        }
     }
 
     static Router () {
-        let router = require('express').Router()
+        let router = ExpressRouter()
 
-        /* GET home page. */
-        router.get(/^.*$/, function(req, res, next) {
-            let app = req.app
-            let eumetsat = app.get('eumetsat')
-            res.render('EUMetSat/index.html.njk', {
-                title: 'Hey! dude!'
-            })
-        })
+        IndexPage(router)
 
         return router
     }

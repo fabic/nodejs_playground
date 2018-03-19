@@ -2,4 +2,9 @@
 
 {% block content %}
   <h1>ERROR!</h1>
+    {% if error %}
+      <div class="error">
+        {{ error }}
+      </div>
+    {% endif %}
 {% endblock %}
