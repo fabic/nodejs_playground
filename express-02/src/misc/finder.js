@@ -13,6 +13,10 @@ let cli = require('cli')
 let fs = require('fs')
 const { sep: dirsep } = require('path')
 
+// Flow.js types definitions
+type FileCollection = Array<{path: string, stats: fs.Stats, id: string, hash: string}>
+type File = {path: string, stats: fs.Stats, id: string, hash: ?string}
+
 // module.exports = Finder
 // ^ Resorting to the fancy new 'export' ES6 keyword.
 
@@ -22,10 +26,6 @@ const { sep: dirsep } = require('path')
  */
 export function Finder () {
 }
-
-
-type FileCollection = Array<{path: string, stats: fs.Stats, id: string, hash: string}>
-type File = {path: string, stats: fs.Stats, id: string, hash: ?string}
 
 /**
  * (Class-method).

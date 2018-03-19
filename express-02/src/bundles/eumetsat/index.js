@@ -558,8 +558,10 @@ class EUMetSatApp
         app.use(path, EUMetSatApp.Router())
         this.logger = app.get('app.logger')
         this.jobScheduler = NodeSchedule
-        this.eumetsat = new EUMetSat(".", this.logger, this.jobScheduler)
+        const images_dir = app.get('app.config')['EUMetSat']['images_dir'];
+        this.eumetsat = new EUMetSat(images_dir, this.logger, this.jobScheduler)
         this.logger.info("Ich bin EUMetSatApp !")
+        this.logger.info(` \` images directory: ${images_dir}`)
         this.initialize()
     }
 

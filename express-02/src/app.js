@@ -27,7 +27,7 @@ const cors           = require('cors')
 const helmet         = require('helmet')
 const opn            = require('opn')
 
-const config = require('../config')
+import config from '../config'
 
 /**
  * The Express App.
@@ -36,6 +36,7 @@ const config = require('../config')
  */
 let app = express()
 
+app.set('app.config', config)
 app.set('app.root_dir', path.join(__dirname, '..'))
 app.set('app.public', path.join(app.get('app.root_dir'), 'public'))
 app.set('app.host', 'localhost') // FIXME: temp.
