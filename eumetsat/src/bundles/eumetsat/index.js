@@ -257,6 +257,7 @@ EUMetSat.prototype.fetch = function _eumetsat_fetch(url: string) {
       let meta = {
         saveFileName:    saveFileName,
         saveFileNameExt: saveFileNameExt,
+        saveFilePathName: this.imagesDirectory + PATHSEP + saveFileName,
         lastModified:    lastModified,
         url:      headers._url,
         fileName: headers._fileName,
@@ -277,7 +278,7 @@ EUMetSat.prototype.fetch = function _eumetsat_fetch(url: string) {
     .then((meta: Object) => {
       meta.mustFetchNewerResource = false
       return new Promise((resolve, reject) => {
-        fs.stat(meta.saveFileName, (err /* Error */, stats: fs.Stats) => {
+        fs.stat(meta.saveFilePathName, (err /* Error */, stats: fs.Stats) => {
           const fileDoesNotExist = err && err.code === 'ENOENT';
           if (fileDoesNotExist) {
             meta.mustFetchNewerResource = true
