@@ -555,13 +555,16 @@ class EUMetSatApp {
     app.use(path, EUMetSatApp.Router())
     this.logger = app.get('app.logger')
     this.jobScheduler = NodeSchedule
-    const images_dir = app.get('app.config')['EUMetSat']['images_dir'];
+    const images_dir = app.get('app.config')['EUMetSat']['images_dir'] || "."
     this.eumetsat = new EUMetSat(images_dir, this.logger, this.jobScheduler)
     this.logger.info("Ich bin EUMetSatApp !")
     this.logger.info(` \` images directory: ${images_dir}`)
     this.initialize()
   }
 
+  /**
+   * (private) Invoked from the constructor. Sets up the job scheduling.
+   */
   initialize() {
     // For debugging
     this.jobScheduler.scheduleJob("One minute ticker", '0 */1 * * * *', (moment: Date) => {
@@ -573,19 +576,24 @@ class EUMetSatApp {
       this.eumetsat.logJobList()
     });
 
-    if (false) {
+    if (true) {
       this.eumetsat.launchFetchJobs()
         .then(() => {
           this.eumetsat.logJobList()
         })
         .finally(() => {
-          this.logger.info("EUMetSatApp.initialize(): done.")
+          this.logger.info("EUMetSatApp.initialize(): done launching fetch jobs.")
           this.logger.info("")
         })
       // todo: handle the returned promise ?
     }
   }
 
+  /**
+   * Returns an express Router with our routing.
+   *
+   * @constructor
+   */
   static Router() {
     let router = ExpressRouter()
 
