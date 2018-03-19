@@ -13,16 +13,16 @@ let cli = require('cli')
 let fs = require('fs')
 const { sep: dirsep } = require('path')
 
+// module.exports = Finder
+// ^ Resorting to the fancy new 'export' ES6 keyword.
+
 /**
- * Finder class.
+ *
+ * @constructor
  */
-function Finder () {
-  if ( ! (this instanceof Finder) ) {
-    return new Finder()
-  }
+export function Finder () {
 }
 
-module.exports = Finder
 
 type FileCollection = Array<{path: string, stats: fs.Stats, id: string, hash: string}>
 type File = {path: string, stats: fs.Stats, id: string, hash: ?string}
@@ -36,11 +36,12 @@ type File = {path: string, stats: fs.Stats, id: string, hash: ?string}
  *
  * todo: many things; visited node handling (cycles);
  *
- * @param  {string} dir
- * @param  {RegEx}  regx
+ * @param  dir   {string}
+ * @param  regx  {RegExp}
  * @return {Array}  a collection of {path: ..., stats: fs.Stats}.
  */
-Finder.find = function find(dir :string, regx :RegExp) : File[] {
+Finder.find = function _finder_find(dir :string, regx :RegExp) : File[]
+{
   regx = regx || /./
 
   let visited = {}; // todo.
@@ -120,11 +121,11 @@ Finder.find = function find(dir :string, regx :RegExp) : File[] {
       }
     })
 
-  }
+  } // iteration over the queue. //
 
   process.stdout.write("\n")
   cli.ok("END: find('" + dir + "', " + regx.toString() + ").")
   cli.ok("     Got " + collect.length + " files.")
 
   return collect
-} // find().
+} // _finder_find() //
