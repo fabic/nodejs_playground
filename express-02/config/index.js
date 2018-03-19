@@ -16,6 +16,7 @@ export const Config = {
 
   EUMetSat: {
     images_dir: path.join(__dirname, '../public/EUMetSat/'),
+    launch_fetch_jobs: true
   }
 }
 

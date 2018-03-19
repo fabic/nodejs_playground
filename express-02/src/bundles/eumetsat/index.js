@@ -545,27 +545,36 @@ EUMetSat.prototype.logJobList = function _eumetsat_log_job_list() {
  * @author fabic.net
  * @since 2018-03-16
  */
-class EUMetSatApp {
+export class EUMetSatApp {
   logger: Object
   jobScheduler: Object
   eumetsat: EUMetSat
 
+  /**
+   * CONSTRUCTOR
+   *
+   * @param app   The Express app.
+   * @param path  The base URL under which to file route handlers.
+   */
   constructor(app: Function, path: string) {
     app.set('eumetsat', this)
     app.use(path, EUMetSatApp.Router())
     this.logger = app.get('app.logger')
     this.jobScheduler = NodeSchedule
-    const images_dir = app.get('app.config')['EUMetSat']['images_dir'] || "."
+
+    const eumetsat_config = app.get('app.config')['EUMetSat'];
+    const images_dir = eumetsat_config['images_dir'] || "."
     this.eumetsat = new EUMetSat(images_dir, this.logger, this.jobScheduler)
+
     this.logger.info("Ich bin EUMetSatApp !")
     this.logger.info(` \` images directory: ${images_dir}`)
-    this.initialize()
+    this.initialize(eumetsat_config.launch_fetch_jobs || false)
   }
 
   /**
    * (private) Invoked from the constructor. Sets up the job scheduling.
    */
-  initialize() {
+  initialize(doLaunchFetchJobs :boolean = false) {
     // For debugging
     this.jobScheduler.scheduleJob("One minute ticker", '0 */1 * * * *', (moment: Date) => {
       this.logger.info(`~~> Heyloo, +1 min., 'tis ${moment.toISOString()}`)
@@ -576,7 +585,7 @@ class EUMetSatApp {
       this.eumetsat.logJobList()
     });
 
-    if (true) {
+    if (doLaunchFetchJobs) {
       this.eumetsat.launchFetchJobs()
         .then(() => {
           this.eumetsat.logJobList()
@@ -586,6 +595,9 @@ class EUMetSatApp {
           this.logger.info("")
         })
       // todo: handle the returned promise ?
+    }
+    else {
+      this.logger.warn("EUMetSatApp.initialize(): We're _NOT_ launching fetch jobs.")
     }
   }
 
