@@ -26,7 +26,20 @@ export function IndexPage(router: Function) {
       .map((item :Object) => {
         item.path = item.path.substr(public_dir.length)
         item.fileName = item.path.substr(item.path.lastIndexOf('/') + 1)
+
+        // Extract metadata from the file name.
+        const [_a, _b, type, region, date, ...rest] = item.fileName.split('_', 6)
+        item.meta = {
+          date: new Date(date),
+          type, region, rest,
+          _a, _b
+        }
+
         return item
+      })
+      // Sort files per date-time, newest first.
+      .sort((item_a :Object, item_b :Object) => {
+        return -(item_a.meta.date.getTime() - item_b.meta.date.getTime())
       })
 
     res.render('EUMetSat/index.html.njk', {
