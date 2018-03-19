@@ -2,6 +2,7 @@
 
 import path from 'path'
 
+// todo: have a config.local.js that we would merge here.
 
 // module.exports = {
 

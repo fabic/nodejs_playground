@@ -82,18 +82,20 @@ export function EUMetSat(imagesDirectory: string,
    * @type {string[]}
    */
   this.skipImagesList = [
-    "MPE_East_IndianOcean",
-    "FIR_WestIndianOcean",                         "FIR_EastIndianOcean",
-    "AMV_WestIndianOcean",                         "AMV_EastIndianOcean",
-    "IR_3.9_Color_West_IndianOcean",     "IR_3.9_Color_East_IndianOcean",
-    "RGB_Airmass_East_IndianOcean",
-    "RGB_Ash_East_IndianOcean",
-    "VIS006Color_West_IndianOcean",       "VIS006Color_East_IndianOcean",
+                                                  "MPE_East_IndianOcean",
+                "FIR_WestIndianOcean",             "FIR_EastIndianOcean",
+                "AMV_WestIndianOcean",             "AMV_EastIndianOcean",
+                                               "WV_6.2_East_IndianOcean",
+      "IR_3.9_Color_West_IndianOcean",   "IR_3.9_Color_East_IndianOcean",
+                                        "IR_10.8_Color_East_IndianOcean",
+                                          "RGB_Airmass_East_IndianOcean",
+                                              "RGB_Ash_East_IndianOcean",
+       "VIS006Color_West_IndianOcean",    "VIS006Color_East_IndianOcean",
     "RGB_Convection_West_IndianOcean", "RGB_Convection_East_IndianOcean",
-    "RGB_Dust_West_IndianOcean",             "RGB_Dust_East_IndianOcean",
-    "RGB_Fog_West_IndianOcean",               "RGB_Fog_East_IndianOcean",
-    "RGB_Microphysics_East_IndianOcean",
-    "RGB_SolarDay_East_IndianOcean",
+          "RGB_Dust_West_IndianOcean",       "RGB_Dust_East_IndianOcean",
+           "RGB_Fog_West_IndianOcean",        "RGB_Fog_East_IndianOcean",
+                                     "RGB_Microphysics_East_IndianOcean",
+                                         "RGB_SolarDay_East_IndianOcean",
   ]
 } // EUMetSat ctor //
 
