@@ -20,8 +20,10 @@ import { IndexPage }               from './routes/index'
 /**
  *
  * @constructor
+ *
  * @param imagesDirectory {string}
- * @param logger {Object}
+ * @param logger          {Object}
+ * @param jobScheduler    {Object}
  * @returns {EUMetSat}
  */
 export function EUMetSat(imagesDirectory: string,
@@ -190,13 +192,16 @@ EUMetSat.prototype.fetchResourceAt = function _eumetsat_fetch_res(url: string,
       + (options.path.substr(options.path.lastIndexOf('/') + 1) ||
         "_eumetsat_fetch_error_couldnt_infer_image_filename"))
 
+    // todo: check first if saveFileName is relative or absolute.
+    const saveFilePathName = this.imagesDirectory + PATHSEP + saveFileName
+
     const req = http.request(options, (res) => {
       this.logger.info(` \` Fetching resource at ${url}, saving to file '${saveFileName}'.  [EUMetSat.fetchResourceAt()]`)
       this.logger.debug(` \` STATUS: ${res.statusCode}`);
       this.logger.debug(` \` HEADERS: ${JSON.stringify(res.headers)}`);
       this.logger.info(` \` Creating file '${saveFileName}'.  [EUMetSat.fetchResourceAt()]`)
 
-      const file = fs.createWriteStream(saveFileName, {encoding: 'binary'})
+      const file = fs.createWriteStream(saveFilePathName, {encoding: 'binary'})
 
       res.setEncoding('binary');
 
