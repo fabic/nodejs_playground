@@ -11,6 +11,16 @@
     </div>
   {% endif %}
 
+  <div>
+  {% for file in latest_images_list %}
+    <div>
+        <img src="{{ file.path }}" alt="file.fileName">
+    </div>
+  {% endfor %}
+  </div>
+
+  <hr>
+
   <ul>
   {% for file in images_list %}
     <li>

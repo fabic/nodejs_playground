@@ -24,6 +24,7 @@ export function IndexPage(router: Function) {
     const public_dir = app.get('app.public')
     const imageFiles = Finder.findSync(eumetsat.imagesDirectory, /\.(jpg|png)$/)
       .map((item :Object) => {
+        // fixme: dumb impl.
         item.path = item.path.substr(public_dir.length)
         item.fileName = item.path.substr(item.path.lastIndexOf('/') + 1)
 
@@ -42,9 +43,20 @@ export function IndexPage(router: Function) {
         return -(item_a.meta.date.getTime() - item_b.meta.date.getTime())
       })
 
+    let imagesTypes = {}
+
+    const latestImagesList = imageFiles.filter((item :Object) => {
+      const type = item.meta.type +' '+ item.meta.region
+      if (type in imagesTypes)
+        return false
+      imagesTypes[type] = item
+      return true
+    })
+
     res.render('EUMetSat/index.html.njk', {
       title: 'Hello hello ?',
       images_list: imageFiles,
+      latest_images_list: latestImagesList
     })
   })
 }
