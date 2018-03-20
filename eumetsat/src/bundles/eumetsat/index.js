@@ -15,6 +15,10 @@ import { sep as PATHSEP } from 'path'
 import { Router as ExpressRouter } from 'express'
 import { IndexPage }               from './routes/index'
 
+import NodeTmp from "tmp";
+import proc from "child_process";
+import FS from "fs";
+
 
 // module.exports = EUMetSat
 // ^ Note: We're using the fancy new ES6 export keyword.
@@ -33,6 +37,7 @@ export function EUMetSat(imagesDirectory: string,
                          jobScheduler: Object = null)
 {
   this.imagesDirectory = imagesDirectory
+  this.videosDirectory = imagesDirectory + PATHSEP + 'videos'
   this.logger          = logger || console
   this.jobScheduler    = jobScheduler || NodeSchedule
 
@@ -79,6 +84,11 @@ export function EUMetSat(imagesDirectory: string,
     { id: "RGB_NatColour_East_IndianOcean",    url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBNatColour_EastIndianOcean.jpg",    update_frequency: 60*60, type: "RGB Composites" },
     { id: "RGB_SolarDay_West_IndianOcean",     url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBSolarDay_WestIndianOcean.jpg",     update_frequency: 60*60, type: "RGB Composites" },
     { id: "RGB_SolarDay_East_IndianOcean",     url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSGIODC_RGBSolarDay_EastIndianOcean.jpg",     update_frequency: 60*60, type: "RGB Composites" },
+
+    // EUROPE //
+    { id: "MSG_WV062_WesternEurope",   url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSG_WV062_WesternEurope.jpg",       update_frequency: 60*60, type: "Channels" },
+    { id: "RGBSolarDay_WesternEurope", url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSG_RGBSolarDay_WesternEurope.jpg", update_frequency: 60*60, type: "RGB Composites" },
+    { id: "RGBAirmass_WesternEurope",  url: "http://oiswww.eumetsat.org/IPPS/html/latestImages/EUMETSAT_MSG_RGBAirmass_WesternEurope.jpg",  update_frequency: 60*60, type: "RGB Composites" },
   ] // EUMetSat.satelliteImagesList[] //
 
   /** List of image IDs we do not want to download.
@@ -86,7 +96,7 @@ export function EUMetSat(imagesDirectory: string,
    * @type {string[]}
    */
   this.skipImagesList = [
-                                                  "MPE_East_IndianOcean",
+               "MPE_West_IndianOcean",            "MPE_East_IndianOcean",
                 "FIR_WestIndianOcean",             "FIR_EastIndianOcean",
                 "AMV_WestIndianOcean",             "AMV_EastIndianOcean",
                                                "WV_6.2_East_IndianOcean",
@@ -99,6 +109,7 @@ export function EUMetSat(imagesDirectory: string,
           "RGB_Dust_West_IndianOcean",       "RGB_Dust_East_IndianOcean",
            "RGB_Fog_West_IndianOcean",        "RGB_Fog_East_IndianOcean",
                                      "RGB_Microphysics_East_IndianOcean",
+                                        "RGB_NatColour_East_IndianOcean",
                                          "RGB_SolarDay_East_IndianOcean",
   ]
 } // EUMetSat ctor //
@@ -544,14 +555,22 @@ EUMetSat.prototype.logJobList = function _eumetsat_log_job_list() {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-EUMetSat.prototype.getAllOnDiskImages = function _eumetsat_get_all_images() : {images:[], latest:{}, types:{}} {
-  const cwd = process.cwd() + PATHSEP
+/**
+ *
+ * todo: Make Finder.find() non-sync. impl. and have this one return a promise or sthg.
+ *
+ * @returns {{images: any[], latest: {}, types: {}}}
+ */
+EUMetSat.prototype.getAllOnDiskImages = function _eumetsat_get_all_images(stripLeadingComponent :string = '')
+  : {images:[], latest:{}, types:{}}
+{
+  stripLeadingComponent = stripLeadingComponent || process.cwd() + PATHSEP
 
   // All images, sorted by type and date-time
   const imageFiles = Finder.findSync(this.imagesDirectory, /\.(jpg|png)$/)
     .map((item :Object) => {
       // todo: strip off curr. dir.
-      item.path = item.path.substr(cwd.length)
+      item.path = item.path.substr(stripLeadingComponent.length)
       item.fileName = item.path.substr(item.path.lastIndexOf('/') + 1)
 
       // Extract metadata from the file name.
@@ -567,33 +586,134 @@ EUMetSat.prototype.getAllOnDiskImages = function _eumetsat_get_all_images() : {i
     })
     // Sort files per date-time, newest first.
     .sort((item_a :Object, item_b :Object) => {
-      const x = item_a.meta.prefix.localeCompare(item_b.meta.prefix)
-      if (x != 0) return x
+      const x :number = item_a.meta.prefix.localeCompare(item_b.meta.prefix)
+      if (x !== 0) return x
       else return (item_a.meta.date.getTime() - item_b.meta.date.getTime())
     })
 
   let imagesTypes = {}
-  let latestImagesByType = {}
+  let latestImageByType = {}
 
   // Partition files by EUMetSat "type", and also select the latest images.
   for(let item of imageFiles)
   {
-    const type = item.meta.type +' '+ item.meta.region
+    const type = item.meta.type +'_'+ item.meta.region
     if (! (type in imagesTypes))
       imagesTypes[ type ] = []
     imagesTypes[ type ].push(item)
 
-    if (! (type in latestImagesByType))
-      latestImagesByType[ type ] = item
+    if (! (type in latestImageByType))
+      latestImageByType[ type ] = item
   }
 
   return {
     images: imageFiles,
-    latest: latestImagesByType,
+    latest: latestImageByType,
     types: imagesTypes,
   }
 } // _eumetsat_log_job_list() //
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+/**
+ * Encode a video for each image sequence by spawning an FFmpeg child process.
+ * See `src/bin/eumetsat.js` cli script with argument `encode-all`.
+ *
+ * Basically this performs an invocation of FFmpeg like :
+ *
+ *     ( ls public/EUMetSat/EUMETSAT_MSGIODC_RGBSolarDay_WestIndianOcean_*.jpg ) \
+ *     | sed -e "s/^\(.*\)$/file '\1'/" \
+ *     | ffmpeg -loglevel info -stats -r 2 -f concat -safe 0 -protocol_whitelist file,pipe -i - \
+ *              -s 1322x1306 -codec:v libx264 -r 25 -preset medium -threads 0 \
+ *              -vf format=yuv420p -crf 26 -bf 2 -g 60 -movflags faststart \
+ *              -y "RGBSolarDay_WestIndianOcean.mp4"
+ *
+ * Or:
+ *     ffmpeg -pattern_type glob -i 'EUMETSAT_MSGIODC_RGBSolarDay_WestIndianOcean_*.jpg' \
+ *            -s 1322x1310 -c:v libx264 -r 30 -pix_fmt yuv420p \
+ *            RGBSolarDay_WestIndianOcean.mp4
+ *
+ * @returns {Promise<any>}
+ */
+EUMetSat.prototype.encodeImagesAsVideo = function _eumetsat_encode_video()
+{
+  return new Promise((resolve, reject) => {
+    const {types: imagesByType} = this.getAllOnDiskImages()
+
+    // This promise's return value is a map of video type --to--> video file name.
+    let generatedVideoFiles = {}
+
+    for (const pair: [string, []] of Object.entries(imagesByType))
+    {
+      const [type, images] = pair
+
+      this.logger.info(`Video:encode: Processing '${type}' images.`)
+
+      //
+      // Create a temporary file with the list of images,
+      // for FFmpeg input arguments `-f concat -i file-list.txt ...`
+      //
+      // todo: wrap that temp. file creation into a Promise for better readability.
+      //
+      NodeTmp.file({ prefix: `FFmpeg-EUMetSat-input-images-list-`,
+                     postfix: '.txt',
+                     dir: process.cwd(),
+                     keep: false
+                   },
+        // fixme: may become a callback hell => refactor!
+        (err, path, fd) => {
+          if (err)
+            throw err
+
+          const inputImagesListFileName = path
+          const outputVideoFileName = this.videosDirectory + PATHSEP + `${type}.mp4`
+
+          this.logger.info(`Writing FFmpeg images list file: ${inputImagesListFileName}`)
+          this.logger.info(` \` Target video file: ${outputVideoFileName}`)
+
+          images.forEach((item) => {
+            // cli.info(` \` ${item.fileName}`)
+            let line1 = `file '${item.path}'\n`
+            // todo: line2 = duration...
+            FS.writeSync(fd, line1)
+          })
+
+          // todo: find out whether or not we need to sync() before closing `fd` .
+          FS.fsyncSync(fd)
+          FS.closeSync(fd)
+
+          // todo: Use non-sync spawn() !
+          // todo: impl. test if video exists and needs re-encoding.
+          if (true) {
+            let ffmpegArgs = [
+              '-loglevel', 'info', '-stats',
+              '-r', '2', '-f', 'concat', '-safe', '0',
+              '-protocol_whitelist', 'file,pipe',
+              '-i', inputImagesListFileName,
+              '-s', '1322x1306', '-codec:v', 'libx264', '-r', '25',
+              '-preset', 'medium',
+              '-threads', '0',
+              '-vf', 'format=yuv420p', '-crf', '26', '-bf', '2', '-g', '60',
+              '-movflags', 'faststart',
+              '-y', outputVideoFileName
+            ]
+
+            let spawnOptions = {
+              stdio: [process.stdin, process.stdout, process.stderr],
+            }
+
+            proc.spawnSync('ffmpeg', ffmpegArgs, spawnOptions)
+
+            // todo: test FFmpeg good exit, if video file exists and non-zero length.
+            // todo: eventually invoke & parse video info.
+            generatedVideoFiles[ type ] = outputVideoFileName
+          }
+        }) // NodeTmp.file() callback //
+    } // iter. over images types //
+
+    resolve( generatedVideoFiles )
+  }) // Promise //
+} // _eumetsat_encode_video() //
 
 // - -
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
