@@ -15,7 +15,7 @@ import { Finder } from "../../../misc/finder"
  * @constructor
  */
 export function IndexPage(router: Function) {
-  router.get(/^.*$/, function (req, res, next) {
+  router.get(/^.*$/, async function (req, res, next) {
     let app = req.app
 
     let eumetsat: EUMetSat = app.get('eumetsat')
@@ -54,10 +54,13 @@ export function IndexPage(router: Function) {
       return true
     })
 
+    const videos = await eumetsat.getGeneratedVideos( public_dir )
+
     res.render('EUMetSat/index.html.njk', {
       title: 'Hello hello ?',
       images_list: imageFiles,
-      latest_images_list: latestImagesList
+      latest_images_list: latestImagesList,
+      videos_list: videos
     })
   })
 }

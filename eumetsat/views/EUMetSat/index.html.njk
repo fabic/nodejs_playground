@@ -14,7 +14,18 @@
     </div>
   {% endif %}
 
-  <div>
+  <div id="eumetsat-videos">
+  {% for file in videos_list %}
+    <div>
+      <video width="486" height="480" controls>
+        <source src="{{ file.path }}" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  {% endfor %}
+  </div>
+
+  <div id="eumetsat-latest-images">
   {% for file in latest_images_list %}
     <div>
         <img src="{{ file.path }}" alt="file.fileName">

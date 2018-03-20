@@ -569,7 +569,6 @@ EUMetSat.prototype.getAllOnDiskImages = function _eumetsat_get_all_images(stripL
   // All images, sorted by type and date-time
   const imageFiles = Finder.findSync(this.imagesDirectory, /\.(jpg|png)$/)
     .map((item :Object) => {
-      // todo: strip off curr. dir.
       item.path = item.path.substr(stripLeadingComponent.length)
       item.fileName = item.path.substr(item.path.lastIndexOf('/') + 1)
 
@@ -612,6 +611,33 @@ EUMetSat.prototype.getAllOnDiskImages = function _eumetsat_get_all_images(stripL
     types: imagesTypes,
   }
 } // _eumetsat_log_job_list() //
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+/**
+ * Search for those generated videos into `this.videosDirectory`
+ *
+ * @returns {Promise<[]>}
+ */
+EUMetSat.prototype.getGeneratedVideos =
+  function _eumetsat_get_generated_videos(stripLeadingComponent: string = '')
+  {
+    stripLeadingComponent = stripLeadingComponent || process.cwd() + PATHSEP
+
+    return new Promise((resolve, reject) => {
+      const videos = Finder.findSync(this.videosDirectory, /\.(mp4|webm)$/)
+        .map((item: Object) => {
+          item.path = item.path.substr(stripLeadingComponent.length)
+          item.fileName = item.path.substr(item.path.lastIndexOf('/') + 1)
+
+          // todo: more impl. like `getAllOnDiskImages()` above.
+
+          return item
+        })
+
+      resolve(videos)
+    })
+  } // _eumetsat_get_generated_videos() //
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
