@@ -6,40 +6,51 @@
 {% block content %}
   <h1>Hello EUMetSat !</h1>
   <p>
-  <b>title:</b> {{ title }}
+    <b>title:</b> {{ title }}
   </p>
+
   {% if error %}
     <div class="error">
-      {{ error }}
+        {{ error }}
     </div>
   {% endif %}
 
+
   <div id="eumetsat-videos">
-  {% for file in videos_list %}
-    <div>
-      <video width="486" height="480" controls>
-        <source src="{{ file.path }}" type="video/mp4">
-        Your browser does not support the video tag.
-      </video>
-    </div>
-  {% endfor %}
+    {#<h2>Videos</h2>#}
+    {% for file in videos_list %}
+      <div class="float-right">
+        <video width="486" height="480" controls style="margin: .125rem">
+          <source src="{{ file.path }}" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+    {% endfor %}
   </div>
+
+  <hr class="float-none">
 
   <div id="eumetsat-latest-images">
-  {% for file in latest_images_list %}
-    <div>
-        <img src="{{ file.path }}" alt="file.fileName">
-    </div>
-  {% endfor %}
+    {#<h2>Latest images :</h2>#}
+    {% for file in latest_images_list %}
+      <div>
+        <img src="{{ file.path }}"
+             alt="file.fileName"
+             width="486">
+      </div>
+    {% endfor %}
   </div>
 
-  <hr>
-
-  <ul>
-  {% for file in images_list %}
-    <li>
-        <a href="{{ file.path }}">{{ file.fileName }}</a>
-    </li>
-  {% endfor %}
-  </ul>
+  <hr class="float-none">
+  <div id="all-images-list">
+    {#<h2>All images :</h2>#}
+    <ul>
+        {% for file in images_list %}
+          <li>
+            <a href="{{ file.path }}">{{ file.fileName }}</a>
+          </li>
+        {% endfor %}
+    </ul>
+  </div>
+    <p><b>EOF</b></p>
 {% endblock content %}
