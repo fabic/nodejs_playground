@@ -8,10 +8,11 @@
     "prepublish": "npm run build",
     "flow": "flow",
     "flow:check": "flow check ./src/",
-    "start": "bin/babel-node $NODE_DEBUG_OPTION src/app.js",
-    "eumetsat": "bin/babel-node $NODE_DEBUG_OPTION src/bin/eumetsat.js",
-    "dev": "bin/nodemon -V --watch src/ --exec bin/babel-node $NODE_DEBUG_OPTION src/app.js",
-    "dev2": "bin/watch --wait=1 'bin/babel src/ -d dist/' ./src/ & bin/nodemon $NODE_DEBUG_OPTION ./dist/app.js"
+    "start": "node --harmony --harmony_promise_finally $NODE_DEBUG_OPTION dist/app.js",
+    "dev": "babel-node $NODE_DEBUG_OPTION src/app.js",
+    "eumetsat": "babel-node $NODE_DEBUG_OPTION src/bin/eumetsat.js",
+    "dev1": "nodemon -V --watch src/ --exec bin/babel-node $NODE_DEBUG_OPTION src/app.js",
+    "dev2": "watch --wait=1 'bin/babel src/ -d dist/' ./src/ & nodemon --harmony --harmony_promise_finally $NODE_DEBUG_OPTION ./dist/app.js"
   },
   "dependencies": {
     "body-parser": "^1.18.2",
