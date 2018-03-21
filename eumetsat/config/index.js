@@ -1,12 +1,13 @@
 'use strict'
 
-import path from 'path'
+// import path from 'path'
+// ^ Can't: babel won't process the contents of this `config/` dir.
+const path = require ('path')
 
 // todo: have a config.local.js that we would merge here.
 
-// module.exports = {
-
-export const Config = {
+//export const Config = {
+let Config = {
   build: {},
   dev: {
     port: 3333,
@@ -21,4 +22,5 @@ export const Config = {
   }
 }
 
-export default Config
+// export default Config
+module.exports = Config
