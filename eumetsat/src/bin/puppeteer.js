@@ -204,7 +204,7 @@ LDLCScrapper.prototype.scrapeIt = function _ldlcScrapper_scrape_it(url)
   }) // Promise() //
     // Normalize results into one flat array.
     .then((results) => {
-      logger.info("hey: Scrapper completed")
+      logger.info("Scrapper completed")
       let retv = []
       for(let obj of results) {
         retv.push(...obj.articles)
@@ -213,6 +213,72 @@ LDLCScrapper.prototype.scrapeIt = function _ldlcScrapper_scrape_it(url)
     })
 
 } // _ldlcScrapper_scrape_it() //
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+/**
+ * Scrape a product page.
+ *
+ * @returns {Promise<[]>}
+ */
+LDLCScrapper.prototype.scrapeProductPage =
+  function _ldlcScrapper_scrape_product_page(url)
+  {
+    return new Promise(async (resolve, reject) => {
+      logger.info(`Scraping ${url}`)
+
+      if (this.browser == null)
+        await this.launchBrowser()
+
+      const page = await this.browser.newPage()
+      await page.setViewport({width: 1366, height: 768})
+      await page.goto(url)
+
+      const result = await page.evaluate(function _fetch_product_details() {
+        console.assert(this instanceof Window)
+
+        const specs = Array.from(
+          document.querySelectorAll(
+            "table#productParametersList tr"),
+            (tr) => {
+              return [
+                tr.cells[0].innerText.trim(),
+                tr.cells[1].innerText.trim()
+              ]
+            })
+
+        const specs2 = new Map(specs)
+
+        // todo: find out if we can easily get an object from a Map.
+        const specs3 = {}
+        specs2.forEach((v,k) => { specs3[k] = v })
+
+        return {
+          specs: specs3,
+          href: document.location.href,
+          hasError: false
+        }
+      }); // page.evaluate() //
+
+      // Leave page open for some time, and close it.
+      if (true) {
+        setTimeout(async () => {
+          this.logger.info(`(Closing page '${page.url()}').`)
+          await page.close()
+        }, 6*5 * 1000) // 6 secs/page times 5 pages.
+      }
+
+      logger.info(" \` - - -")
+      logger.info("")
+
+      resolve(result)
+    }) // Promise() //
+    // Normalize results into one flat array.
+      .then((result) => {
+        logger.info("Scrapper completed")
+        return result
+      })
+  } // _ldlcScrapper_scrape_procuct_page() //
 
 // - -
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -226,26 +292,48 @@ if (cli.command === "hey") {
     (async () => {
       let scrapper = new LDLCScrapper()
 
-      await scrapper.scrapeIt('https://www.ldlc.com/informatique/pieces-informatique/carte-mere/c4293/')
-        .then((result) => {
-          logger.info("hey: done, got our motherboards.")
-          console.log(result)
-        })
-        .finally( async () => {
-          logger.debug("hey: done, finally.")
-        })
+      if (false) {
+        await scrapper.scrapeIt('https://www.ldlc.com/informatique/pieces-informatique/carte-mere/c4293/')
+          .then((result) => {
+            logger.info("hey: done, got our motherboards.")
+            console.log(result)
+          })
+          .finally(async () => {
+            logger.debug("hey: done, finally.")
+          })
 
-      await scrapper.scrapeIt('https://www.ldlc.com/informatique/pieces-informatique/processeur/c4300/')
-        .then((result) => {
-          logger.info("hey: done, got those CPUs")
-          console.log(result)
-        })
+        await scrapper.scrapeIt('https://www.ldlc.com/informatique/pieces-informatique/carte-graphique-interne/c4684/')
+          .then((result) => {
+            logger.info("hey: done, got those GPUs")
+            console.log(result)
+          })
+      }
 
-      await scrapper.scrapeIt('https://www.ldlc.com/informatique/pieces-informatique/carte-graphique-interne/c4684/')
-        .then((result) => {
-          logger.info("hey: done, got those GPUs")
-          console.log(result)
-        })
+      if (true) {
+        const products = await scrapper.scrapeIt('https://www.ldlc.com/informatique/pieces-informatique/processeur/c4300/')
+          .then(async (products) => {
+            logger.info("hey: done, got those CPUs (#{products.length}), will now fetch details")
+            let index = 0
+            for (let item of products) {
+              index++
+              logger.info(` \` #${index}/${products.length} : ${item.title}  ${item.href}`)
+              let details = await scrapper.scrapeProductPage(item.href)
+              item.details = details
+              console.log(item)
+
+            }
+            return products
+          })
+          .then((products) => {
+            logger.info("hey: completed ok")
+            console.log(products)
+          })
+      }
+
+      if (true) {
+        let details = await scrapper.scrapeProductPage('https://www.ldlc.com/fiche/PB00242064.html')
+        console.log(details)
+      }
 
       logger.info("hey: waiting for user to close tha browser.")
       await scrapper.waitForBrowserDisconnect()
