@@ -75,6 +75,7 @@ LDLCScrapper.prototype.scrapeIt = function _ldlcScrapper_scrape_it()
     const browser = await puppeteer.launch({
       headless: false,
       executablePath: '/usr/bin/google-chrome-unstable',
+      userDataDir: '/home/fabi/.config/google-chrome-tmp',
       slowMo: 300, // milliseconds
       dumpio: true,
       devtools: true,
@@ -91,10 +92,13 @@ LDLCScrapper.prototype.scrapeIt = function _ldlcScrapper_scrape_it()
     //await page.screenshot({path: 'example.png'})
 
     let   iterCount     = 1
-    const maxIterations = 2
+    const maxIterations = 20
+    let   allResults    = []
 
-    while(iterCount <= maxIterations)
+    while(true)
     {
+      logger.info(`~~> ITERATION #${iterCount}`)
+
       const result = await page.evaluate(function _fetch_articles() {
         console.assert(this instanceof Window)
 
@@ -117,42 +121,50 @@ LDLCScrapper.prototype.scrapeIt = function _ldlcScrapper_scrape_it()
         }
       }); // page.evaluate() //
 
+      allResults.push(result)
 
       console.log(result);
 
-
       if (result.hasError) {
-        logger.error("Oops! result may have some error(s) [BREAK].")
+        logger.error(" \` Oops! result may have some error(s) [BREAK].")
         break
       }
       else if (! result.hasNextPage) {
-        logger.info("Reached last page, ok [BREAK]")
+        logger.info(" \` Reached last page, ok [BREAK]")
         break
       }
 
       iterCount++
-      logger.info(`~~> NEXT ITERATION (${iterCount})`)
+      if (iterCount > maxIterations) {
+        logger.warn(` \`~~> REACHED MAXIMUM ITERATION COUNT (${iterCount}) [BREAK]`)
+        break
+      }
 
-      await do_pause_for_a_while(1000)
+      logger.info(` \`~~> NEXT ITERATION (${iterCount})`)
+
+      await do_pause_for_a_while(200 + Math.floor(Math.random() * 300))
 
       //await page.click("a.pagerNextItem[rel=next]")
       // ^ https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md#pageclickselector-options
       //   The correct pattern for click'n'wait :
       const nextPageSelectorStr = "a.pagerNextItem[rel=next]";
-      const [response] = await Promise.all([
+      const [httpResponse] = await Promise.all([
         page.waitForNavigation(/* waitOptions */ {}),
         page.click(nextPageSelectorStr, /* clickOptions */ {}),
       ]);
+
       logger.info(" \` Click'n'wait done.")
-    }
+      // console.log(httpResponse)
 
-
+      logger.info(" \` - - -")
+      logger.info("")
+    } // while(true) //
 
     // await do_pause_for_a_while( 5000 )
     // await browser.close()
     // ^ We _do_ want to wait for the user to close the browser.
-  })
-}
+  }) // Promise() //
+} // _ldlcScrapper_scrape_it() //
 
 // - -
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
