@@ -645,6 +645,11 @@ EUMetSat.prototype.getGeneratedVideos =
  * Encode a video for each image sequence by spawning an FFmpeg child process.
  * See `src/bin/eumetsat.js` cli script with argument `encode-all`.
  *
+ * TODO: refactor w/o sync. calls
+ * TODO: refactor to support frame duration https://stackoverflow.com/a/25089732
+ * TODO: Refactor so that we can generate multiple output: VP9, x264, x265.
+ * TODO: See if we can append frames to existing videos.
+ *
  * Basically this performs an invocation of FFmpeg like :
  *
  *     ( ls public/EUMetSat/EUMETSAT_MSGIODC_RGBSolarDay_WestIndianOcean_*.jpg ) \
@@ -661,7 +666,7 @@ EUMetSat.prototype.getGeneratedVideos =
  *
  * @returns {Promise<any>}
  */
-EUMetSat.prototype.encodeImagesAsVideo = function _eumetsat_encode_video()
+EUMetSat.prototype.encodeImagesAsVideo = function _eumetsat_encode_video(format :string = 'vp9')
 {
   return new Promise((resolve, reject) => {
     const {types: imagesByType} = this.getAllOnDiskImages()
@@ -692,10 +697,9 @@ EUMetSat.prototype.encodeImagesAsVideo = function _eumetsat_encode_video()
             throw err
 
           const inputImagesListFileName = path
-          const outputVideoFileName = this.videosDirectory + PATHSEP + `${type}.mp4`
+          let outputVideoFileName = this.videosDirectory + PATHSEP + `${type}` // .ext is added later on.
 
           this.logger.info(`Writing FFmpeg images list file: ${inputImagesListFileName}`)
-          this.logger.info(` \` Target video file: ${outputVideoFileName}`)
 
           images.forEach((item) => {
             // cli.info(` \` ${item.fileName}`)
@@ -710,25 +714,55 @@ EUMetSat.prototype.encodeImagesAsVideo = function _eumetsat_encode_video()
 
           // todo: Use non-sync spawn() !
           // todo: impl. test if video exists and needs re-encoding.
-          if (true) {
+          const needEncodeVideo = true
+          const resolution = '730x720'// '1094x1080' // '1322x1306'
+          const framerate = 3
+
+          if (needEncodeVideo) {
             let ffmpegArgs = [
               '-loglevel', 'info', '-stats',
-              '-r', '2', '-f', 'concat', '-safe', '0',
+              '-r', framerate, // fixme: Must come first, why ?!
+              '-f', 'concat', '-safe', '0',
               '-protocol_whitelist', 'file,pipe',
               '-i', inputImagesListFileName,
-              '-s', '1322x1306', '-codec:v', 'libx264', '-r', '25',
-              '-preset', 'medium',
-              '-threads', '0',
-              '-vf', 'format=yuv420p', '-crf', '26', '-bf', '2', '-g', '60',
+            ]
+
+            if (format === 'x264') {
+              outputVideoFileName += '.mp4'
+              Array.prototype.push.apply(ffmpegArgs, [
+                '-s', resolution,
+                '-codec:v', 'libx264', '-r', '25', '-preset', 'medium',
+                '-threads', '1', '-vf', 'format=yuv420p', '-crf', '26',
+                '-bf', '2', '-g', '60',
+              ])
+            }
+            else if (format === 'vp9') {
+              outputVideoFileName += '.webm'
+              Array.prototype.push.apply(ffmpegArgs, [
+                '-s', resolution,
+                '-codec:v', 'libvpx-vp9', '-vf', 'format=yuv420p',
+                '-r', '25', '-b:v', '0', '-deadline', 'good',  '-crf', '31',
+                '-tile-columns', '2', '-threads', '1',
+                // '-flags', '+gcop',
+                '-g', '240',
+              ])
+            }
+
+            Array.prototype.push.apply(ffmpegArgs, [
               '-movflags', 'faststart',
               '-y', outputVideoFileName
-            ]
+            ])
+
+            this.logger.info(` \` Target video file: ${outputVideoFileName}`)
+            this.logger.info(" \` Invoking FFmpeg :" + ffmpegArgs.join(' '))
 
             let spawnOptions = {
               stdio: [process.stdin, process.stdout, process.stderr],
             }
 
-            proc.spawnSync('ffmpeg', ffmpegArgs, spawnOptions)
+            const exitStatus = proc.spawnSync('ffmpeg', ffmpegArgs, spawnOptions)
+
+            console.log(exitStatus)
 
             // todo: test FFmpeg good exit, if video file exists and non-zero length.
             // todo: eventually invoke & parse video info.

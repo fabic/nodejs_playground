@@ -3,54 +3,65 @@
 {% block aside_content %}
 {% endblock aside_content %}
 
-{% block content %}
-  <h1>Hello EUMetSat !</h1>
-  <p>
-    <b>title:</b> {{ title }}
-  </p>
+{% block container %}
+  <div class="row">
+    <div class="col-md-12">
 
-  {% if error %}
-    <div class="error">
-        {{ error }}
-    </div>
-  {% endif %}
+      <h1>Hello EUMetSat !</h1>
+      <p>
+        <b>title:</b> {{ title }}
+      </p>
+
+      {% if error %}
+        <div class="error">
+          {{ error }}
+        </div>
+      {% endif %}
 
 
-  <div id="eumetsat-videos">
-    {#<h2>Videos</h2>#}
-    {% for file in videos_list %}
-      <div class="float-right">
-        <video width="486" height="480" controls style="margin: .125rem">
-          <source src="{{ file.path }}" type="video/mp4">
-          Your browser does not support the video tag.
-        </video>
-      </div>
-    {% endfor %}
-  </div>
-
-  <hr class="float-none">
-
-  <div id="eumetsat-latest-images">
-    {#<h2>Latest images :</h2>#}
-    {% for file in latest_images_list %}
-      <div>
-        <img src="{{ file.path }}"
-             alt="file.fileName"
-             width="486">
-      </div>
-    {% endfor %}
-  </div>
-
-  <hr class="float-none">
-  <div id="all-images-list">
-    {#<h2>All images :</h2>#}
-    <ul>
-        {% for file in images_list %}
-          <li>
-            <a href="{{ file.path }}">{{ file.fileName }}</a>
-          </li>
+      <!-- Don't autoplay all these: heavily consumes CPU, like >100% :-/ -->
+      <div id="eumetsat-videos">
+        {#<h2>Videos</h2>#}
+        {# todo: video poster="....jpg" image. #}
+        {# todo: multiple video sources/formats (mp4 x265 & webm VP9) #}
+        {% for file in videos_list %}
+          <div class="float-right">
+            <video width="486" height="480"
+                   controls loop playsinline
+                   style="margin: .125rem">
+              {#<source src="{{ file.path }}" type="video/mp4">#}
+              <source src="{{ file.path }}" type="video/webm">
+              Your browser does not support the video tag.
+            </video>
+          </div>
         {% endfor %}
-    </ul>
-  </div>
-    <p><b>EOF</b></p>
-{% endblock content %}
+      </div>
+
+      <hr class="float-none">
+
+      <div id="eumetsat-latest-images">
+        {#<h2>Latest images :</h2>#}
+        {% for file in latest_images_list %}
+          <div class="float-right">
+            <img src="{{ file.path }}"
+                 alt="file.fileName"
+                 width="486">
+          </div>
+        {% endfor %}
+      </div>
+
+      <hr class="float-none">
+      <div id="all-images-list">
+        {#<h2>All images :</h2>#}
+        <ul>
+          {% for file in images_list %}
+            <li>
+              <a href="{{ file.path }}">{{ file.fileName }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+      <p><b>EOF</b></p>
+    </div> <!--/ .col-md-12 -->
+  </div> <!--/ .row -->
+{% endblock container %}

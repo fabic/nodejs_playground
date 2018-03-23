@@ -8,9 +8,10 @@
     "prepublish": "npm run build",
     "flow": "flow",
     "flow:check": "flow check ./src/",
-    "start": "node --harmony --harmony_promise_finally $NODE_DEBUG_OPTION dist/app.js",
+    "start": "npm run build & node --harmony --harmony_promise_finally $NODE_DEBUG_OPTION dist/app.js",
     "dev": "babel-node $NODE_DEBUG_OPTION src/app.js",
     "eumetsat": "babel-node $NODE_DEBUG_OPTION src/bin/eumetsat.js",
+    "scraper": "babel-node $NODE_DEBUG_OPTION src/bin/puppeteer.js",
     "dev1": "nodemon -V --watch src/ --exec bin/babel-node $NODE_DEBUG_OPTION src/app.js",
     "dev2": "watch --wait=1 'bin/babel src/ -d dist/' ./src/ & nodemon --harmony --harmony_promise_finally $NODE_DEBUG_OPTION ./dist/app.js"
   },
@@ -32,6 +33,7 @@
     "opn": "^5.3.0",
     "pg-promise": "^7.5.4",
     "phantom": "^4.0.12",
+    "puppeteer": "^1.2.0",
     "serve-favicon": "^2.4.5",
     "tmp": "0.0.33",
     "winston": "^2.4.1"
