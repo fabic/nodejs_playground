@@ -60,40 +60,75 @@ function do_pause_for_a_while( msecs = 500 )
  *
  * @constructor
  */
-function LDLCScrapper() {
-
+function LDLCScrapper(logger = null) {
+  this.logger = logger || require('winston')
+  this.browser = null
 }
 
 /**
- * Returns a Promise that resolves once the browser is manually closed by user.
+ * Launch a browser and set `this.browser`.
+ *
+ * @returns {Promise<Puppeteer.Browser>}
+ */
+LDLCScrapper.prototype.launchBrowser = function _ldlcScrapper_launch_browser()
+{
+  return puppeteer.launch({
+    headless: false,
+    executablePath: '/usr/bin/google-chrome-unstable',
+    userDataDir: '/home/fabi/.config/google-chrome-tmp',
+    slowMo: 300, // milliseconds
+    dumpio: true,
+    devtools: false,
+  })
+    .then((browser) => {
+      this.logger.info("We got a browser launched.")
+      assert(this.browser == null)
+      this.browser = browser
+      return browser
+    })
+}
+
+/** Convenience method for having the process wait for the user to close the
+ * browser, instead of exiting blindly at end-of-script.
  *
  * @returns {Promise<any>}
  */
-LDLCScrapper.prototype.scrapeIt = function _ldlcScrapper_scrape_it()
+LDLCScrapper.prototype.waitForBrowserDisconnect =
+  function _ldlcScrapper_wait_for_browser_disconnect()
+  {
+    assert(this.browser != null)
+    return new Promise((resolve, reject) => {
+      this.logger.info("Will wait for browser to close/disconnect.")
+      this.browser.on('disconnected', () => {
+        const message = "Browser disconnected, probably ok.";
+        logger.info(`${message}  [LDLCScrapper.waitForBrowserDisconnect()]`)
+        //reject(new Error(message))
+        resolve()
+      })
+    })
+  }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+/**
+ * Scrape something.
+ *
+ * @returns {Promise<[]>}
+ */
+LDLCScrapper.prototype.scrapeIt = function _ldlcScrapper_scrape_it(url)
 {
   return new Promise( async (resolve, reject) => {
-    const browser = await puppeteer.launch({
-      headless: false,
-      executablePath: '/usr/bin/google-chrome-unstable',
-      userDataDir: '/home/fabi/.config/google-chrome-tmp',
-      slowMo: 300, // milliseconds
-      dumpio: true,
-      devtools: true,
-    })
+    if (this.browser == null)
+      await this.launchBrowser()
 
-    browser.on('disconnected', () => {
-      cli.info("Browser disconnected.")
-      resolve(true)
-    })
-
-    const page = await browser.newPage()
+    const page = await this.browser.newPage()
     await page.setViewport({width: 1280, height: 1024})
-    await page.goto('https://www.ldlc.com/informatique/pieces-informatique/carte-mere/c4293/')
-    //await page.screenshot({path: 'example.png'})
+    await page.goto(url)
+
+    let   allResults    = []
 
     let   iterCount     = 1
     const maxIterations = 20
-    let   allResults    = []
 
     while(true)
     {
@@ -123,7 +158,7 @@ LDLCScrapper.prototype.scrapeIt = function _ldlcScrapper_scrape_it()
 
       allResults.push(result)
 
-      console.log(result);
+      // console.log(result);
 
       if (result.hasError) {
         logger.error(" \` Oops! result may have some error(s) [BREAK].")
@@ -158,12 +193,25 @@ LDLCScrapper.prototype.scrapeIt = function _ldlcScrapper_scrape_it()
 
       logger.info(" \` - - -")
       logger.info("")
+
     } // while(true) //
+
+    resolve( allResults )
 
     // await do_pause_for_a_while( 5000 )
     // await browser.close()
-    // ^ We _do_ want to wait for the user to close the browser.
+    // ^ We ain't closing the browser, leaving it open for any further calls.
   }) // Promise() //
+    // Normalize results into one flat array.
+    .then((results) => {
+      logger.info("hey: Scrapper completed")
+      let retv = []
+      for(let obj of results) {
+        retv.push(...obj.articles)
+      }
+      return retv
+    })
+
 } // _ldlcScrapper_scrape_it() //
 
 // - -
@@ -177,8 +225,30 @@ if (cli.command === "hey") {
 
     (async () => {
       let scrapper = new LDLCScrapper()
-      await scrapper.scrapeIt()
-      logger.info("hey: done.")
+
+      await scrapper.scrapeIt('https://www.ldlc.com/informatique/pieces-informatique/carte-mere/c4293/')
+        .then((result) => {
+          logger.info("hey: done, got our motherboards.")
+          console.log(result)
+        })
+        .finally( async () => {
+          logger.debug("hey: done, finally.")
+        })
+
+      await scrapper.scrapeIt('https://www.ldlc.com/informatique/pieces-informatique/processeur/c4300/')
+        .then((result) => {
+          logger.info("hey: done, got those CPUs")
+          console.log(result)
+        })
+
+      await scrapper.scrapeIt('https://www.ldlc.com/informatique/pieces-informatique/carte-graphique-interne/c4684/')
+        .then((result) => {
+          logger.info("hey: done, got those GPUs")
+          console.log(result)
+        })
+
+      logger.info("hey: waiting for user to close tha browser.")
+      await scrapper.waitForBrowserDisconnect()
     })();
 }
 else if (cli.command === "huh") {
