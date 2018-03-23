@@ -23,6 +23,11 @@ cli.parse({
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 /**
+ * Modern ES6+ way of pausing javascript code.  Returns a Promise, completion
+ * of which one can `await`.
+ *
+ * Usage: `await sleep_promise(5*1000)`
+ *
  * @link https://stackoverflow.com/a/39914235/643087
  * @param ms {number}
  * @returns {Promise<any>}
@@ -33,6 +38,7 @@ function sleep_promise(ms) {
 }
 
 /**
+ * Wrapper aroung `sleep_promise()` that issues informational messages.
  *
  * @param msecs
  * @returns {Promise<any>}
@@ -47,6 +53,65 @@ function do_pause_for_a_while( msecs = 500 )
     })
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+/**
+ *
+ * @constructor
+ */
+function LDLCScrapper() {
+
+}
+
+/**
+ * Returns a Promise that resolves once the browser is manually closed by user.
+ *
+ * @returns {Promise<any>}
+ */
+LDLCScrapper.prototype.scrapeIt = function _ldlcScrapper_scrape_it()
+{
+  return new Promise( async (resolve, reject) => {
+    const browser = await puppeteer.launch({
+      headless: false,
+      executablePath: '/usr/bin/google-chrome-unstable',
+      slowMo: 300, // milliseconds
+      dumpio: true,
+      devtools: true,
+    })
+
+    browser.on('disconnected', () => {
+      cli.info("Browser disconnected.")
+      resolve(true)
+    })
+
+    const page = await browser.newPage()
+    await page.setViewport({width: 1280, height: 1024})
+    await page.goto('https://www.ldlc.com/informatique/pieces-informatique/carte-mere/c4293/')
+    //await page.screenshot({path: 'example.png'})
+
+    const result = await page.evaluate(function _fetch_articles() {
+      console.log( this )
+      let articles = Array.from(
+        document.querySelectorAll("a.nom[href^='https://www.ldlc.com/fiche/']"),
+        (a) => {
+          return {
+            href: a.href,
+            title: a.title
+          }
+        })
+
+      return articles
+    });
+
+    console.log(result);
+
+    // await do_pause_for_a_while( 5000 )
+    // await browser.close()
+    // ^ We _do_ want to wait for the user to close the browser.
+  })
+}
+
 // - -
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // - -
@@ -57,37 +122,9 @@ if (cli.command === "hey") {
     logger.info("Default arguments: " + puppeteer.defaultArgs().join(' '));
 
     (async () => {
-      const browser = await puppeteer.launch({
-        headless: false,
-        executablePath: '/usr/bin/google-chrome-unstable',
-        slowMo: 300, // milliseconds
-        dumpio: true,
-        devtools: true,
-      })
-      const page = await browser.newPage()
-      await page.setViewport({width: 1280, height: 1024})
-      await page.goto('https://www.ldlc.com/informatique/pieces-informatique/carte-mere/c4293/')
-      //await page.screenshot({path: 'example.png'})
-
-      const result = await page.evaluate(function _fetch_articles() {
-        console.log( this )
-        let articles = Array.from(
-          document.querySelectorAll("a.nom[href^='https://www.ldlc.com/fiche/']"),
-          (a) => {
-            return {
-              href: a.href,
-              title: a.title
-            }
-          })
-
-        return articles
-      });
-
-      console.log(result);
-
-      await do_pause_for_a_while( 5000 )
-
-      await browser.close()
+      let scrapper = new LDLCScrapper()
+      await scrapper.scrapeIt()
+      logger.info("hey: done.")
     })();
 }
 else if (cli.command === "huh") {
