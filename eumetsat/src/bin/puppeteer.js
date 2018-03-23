@@ -224,8 +224,11 @@ LDLCScrapper.prototype.scrapeIt = function _ldlcScrapper_scrape_it(url)
 LDLCScrapper.prototype.scrapeProductPage =
   function _ldlcScrapper_scrape_product_page(url)
   {
+    const _startMsecs = Date.now()
+
     return new Promise(async (resolve, reject) => {
       logger.info(`Scraping ${url}`)
+
 
       if (this.browser == null)
         await this.launchBrowser()
@@ -278,7 +281,7 @@ LDLCScrapper.prototype.scrapeProductPage =
         setTimeout(async () => {
           this.logger.info(`(Closing page '${page.url()}').`)
           await page.close()
-        }, 6*5 * 1000) // 6 secs/page times 5 pages.
+        }, 4*8 * 1000) // 4 secs/page times 8 pages ~= 32 secs.
       }
 
       logger.info(" \` - - -")
@@ -287,8 +290,10 @@ LDLCScrapper.prototype.scrapeProductPage =
       resolve(result)
     }) // Promise() //
     // Normalize results into one flat array.
+    // and compute the elapsed time.
       .then((result) => {
         logger.info("Scrapper completed")
+        result._elaps = Math.round((Date.now() - _startMsecs) / 100) / 10
         return result
       })
   } // _ldlcScrapper_scrape_procuct_page() //
@@ -323,17 +328,17 @@ if (cli.command === "hey") {
       }
 
       if (true) {
-        const products = await scrapper.scrapeIt('https://www.ldlc.com/informatique/pieces-informatique/processeur/c4300/')
+        const products = await scrapper.scrapeIt('https://www.ldlc.com/informatique/pieces-informatique/carte-mere/c4293/')
           .then(async (products) => {
-            logger.info("hey: done, got those CPUs (#{products.length}), will now fetch details")
+            logger.info("hey: done, got those products (#{products.length}), will now fetch details")
             let index = 0
             for (let item of products) {
               index++
               logger.info(` \` #${index}/${products.length} : ${item.title}  ${item.href}`)
               let details = await scrapper.scrapeProductPage(item.href)
               item.details = details
+              logger.info(` ^ #${index}/${products.length} : ${item.details._elaps} seconds.`)
               console.log(item)
-
             }
             return products
           })
