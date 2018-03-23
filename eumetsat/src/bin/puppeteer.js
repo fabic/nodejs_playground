@@ -230,9 +230,22 @@ LDLCScrapper.prototype.scrapeProductPage =
       if (this.browser == null)
         await this.launchBrowser()
 
-      const page = await this.browser.newPage()
-      await page.setViewport({width: 1366, height: 768})
-      await page.goto(url)
+      const reuseLastPage = true;
+      let   page = null
+
+      // New page (slower)
+      if (! reuseLastPage) {
+        page = await this.browser.newPage()
+        await page.setViewport({width: 1366, height: 768})
+      }
+      // Reuse last open page (much faster).
+      else {
+        const pages = await this.browser.pages()
+        assert(pages.length > 0)
+        page = pages[ pages.length - 1 ]
+      }
+
+      await page.goto( url )
 
       const result = await page.evaluate(function _fetch_product_details() {
         console.assert(this instanceof Window)
@@ -260,8 +273,8 @@ LDLCScrapper.prototype.scrapeProductPage =
         }
       }); // page.evaluate() //
 
-      // Leave page open for some time, and close it.
-      if (true) {
+      // Leave newly opened pages open for some time, then close these.
+      if (! reuseLastPage) {
         setTimeout(async () => {
           this.logger.info(`(Closing page '${page.url()}').`)
           await page.close()
