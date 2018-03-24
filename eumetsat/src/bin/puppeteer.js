@@ -8,6 +8,7 @@ const assert = require('assert')
 const cli    = require('cli')
 import logger from 'winston'
 import puppeteer from 'puppeteer'
+import _ from 'lodash'
 
 import Config from '../../config'
 
@@ -55,7 +56,6 @@ function do_pause_for_a_while( msecs = 500 )
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-
 /**
  *
  * @constructor
@@ -64,6 +64,8 @@ function LDLCScrapper(logger = null) {
   this.logger = logger || require('winston')
   this.browser = null
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 /**
  * Launch a browser and set `this.browser`.
@@ -76,7 +78,7 @@ LDLCScrapper.prototype.launchBrowser = function _ldlcScrapper_launch_browser()
     headless: false,
     executablePath: '/usr/bin/google-chrome-unstable',
     userDataDir: '/home/fabi/.config/google-chrome-tmp',
-    slowMo: 300, // milliseconds
+    // slowMo: 300, // milliseconds
     dumpio: true,
     devtools: false,
   })
@@ -87,6 +89,8 @@ LDLCScrapper.prototype.launchBrowser = function _ldlcScrapper_launch_browser()
       return browser
     })
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 /** Convenience method for having the process wait for the user to close the
  * browser, instead of exiting blindly at end-of-script.
@@ -141,7 +145,7 @@ LDLCScrapper.prototype.scrapeIt = function _ldlcScrapper_scrape_it(url)
           document.querySelectorAll("a.nom[href^='https://www.ldlc.com/fiche/']"),
           (a) => {
             return {
-              href: a.href,
+               href: a.href,
               title: a.title
             }
           })
@@ -226,20 +230,35 @@ LDLCScrapper.prototype.scrapeProductPage =
   {
     const _startMsecs = Date.now()
 
-    return new Promise(async (resolve, reject) => {
-      logger.info(`Scraping ${url}`)
+    const          reuseLastPage = true
+    const shallInterceptRequests = false
 
+    return new Promise(async (resolve, reject) => {
+      logger.info(`Scraping product page at ${url}`)
 
       if (this.browser == null)
         await this.launchBrowser()
 
-      const reuseLastPage = true;
-      let   page = null
+      let page = null
 
       // New page (slower)
       if (! reuseLastPage) {
         page = await this.browser.newPage()
         await page.setViewport({width: 1366, height: 768})
+        if (shallInterceptRequests) {
+          await page.setRequestInterception(true);
+          page.on('request', (request) => {
+            const url = request.url()
+            const ext = url.substr(url.length - 3) // fixme: lazy, shall also handle QS.
+            this.logger.info(` \` Page request: ${url}   [EXT: ${ext}]`)
+            if (ext in {jpg: 0, png: 0, gif: 0, svg: 0}) {
+              this.logger.info(`   \` Aborting request for ${url}  [IMAGE]`)
+              request.abort()
+            }
+            else
+              request.continue();
+          });
+        }
       }
       // Reuse last open page (much faster).
       else {
@@ -250,7 +269,20 @@ LDLCScrapper.prototype.scrapeProductPage =
 
       await page.goto( url )
 
-      const result = await page.evaluate(function _fetch_product_details() {
+      // Inject Lodash - https://lodash.com/
+      // await page.addScriptTag({
+      //   // url: "https://cdn.jsdelivr.net/npm/lodash@4.17.5/lodash.min.js"
+      //   path:"node_modules/lodash/lodash.min.js"
+      // })
+
+      // await page.exposeFunction('scr4p', () => {
+      //   return {
+      //     _: _,
+      //     lodash: _
+      //   }
+      // });
+
+      const result = await page.evaluate(async function _fetch_product_details() {
         console.assert(this instanceof Window)
 
         const specs = Array.from(
@@ -267,12 +299,32 @@ LDLCScrapper.prototype.scrapeProductPage =
 
         // todo: find out if we can easily get an object from a Map.
         const specs3 = {}
-        specs2.forEach((v,k) => { specs3[k] = v })
+        specs2.forEach((v,k) => {
+          // const key = _.snakeCase(k)
+          // const key = scr4p.lodash.snakeCase(k)
+          const key = k
+          specs3[key] = v
+        })
+
+        const productName = document.querySelectorAll(
+          "#productheader .designation_courte")[ 0 ]
+            .innerText.trim()
+
+        const productHeading = document.querySelectorAll(
+          "#productheader .designation_longue")[ 0 ]
+            .innerText.trim()
+
+        const priceElt = document.querySelectorAll("#productshipping .price.sale")[0]
+        const priceTaxElt = priceElt.nextSibling
+        const productPrice = `${priceElt.innerText.trim()} (${priceTaxElt.innerText.trim()})`
 
         return {
-          specs: specs3,
-          href: document.location.href,
-          hasError: false
+          specs:    specs3,
+          href:     document.location.href,
+          name:     productName,
+          heading:  productHeading,
+          price:    productPrice,
+          hasError: false // todo?
         }
       }); // page.evaluate() //
 
@@ -281,19 +333,26 @@ LDLCScrapper.prototype.scrapeProductPage =
         setTimeout(async () => {
           this.logger.info(`(Closing page '${page.url()}').`)
           await page.close()
-        }, 4*8 * 1000) // 4 secs/page times 8 pages ~= 32 secs.
+        }, 3*10 * 1000) // 3 secs/page times 10 pages ~= 30 secs.
       }
-
-      logger.info(" \` - - -")
-      logger.info("")
 
       resolve(result)
     }) // Promise() //
-    // Normalize results into one flat array.
-    // and compute the elapsed time.
+    // todo: ~~Normalize results~~ like re-mapping with our own key names? here?
+    // Compute the elapsed time.
       .then((result) => {
-        logger.info("Scrapper completed")
+        result._specs = {}
+        _.forEach(result.specs, (v, k) => {
+          const key = _.snakeCase( k )
+          result._specs[ key ] = v
+        })
+
         result._elaps = Math.round((Date.now() - _startMsecs) / 100) / 10
+
+        logger.info(`Scrapper done with '${result.href}, elaps: ${result._elaps} secs.'`)
+        logger.info(" \` - - -")
+        logger.info("")
+
         return result
       })
   } // _ldlcScrapper_scrape_procuct_page() //
@@ -327,7 +386,7 @@ if (cli.command === "hey") {
           })
       }
 
-      if (true) {
+      if (false) {
         const products = await scrapper.scrapeIt('https://www.ldlc.com/informatique/pieces-informatique/carte-mere/c4293/')
           .then(async (products) => {
             logger.info("hey: done, got those products (#{products.length}), will now fetch details")
