@@ -94,9 +94,16 @@ else if (cli.command === "huh")
     (async () => {
       let scrapper = new Scrapper()
 
-      if (true) {
-        let links = await scrapper.scrapeZtDlProtect('https://www.dl-protect1.com/1234556001234556021234556101234556150x9xd04kaitk')
+      if (false) {
+        let links = await scrapper.scrapeZtDlProtect(
+          'https://www.dl-protect1.com/1234556001234556021234556101234556150x9xd04kaitk')
         console.log(links)
+      }
+
+      if (true) {
+        let results = await scrapper.scrapeZtPostPage(
+          'https://ww1.zone-telechargement1.com/3105-game-of-thrones-saison-3-french-hd720.html')
+        console.log(results)
       }
 
       logger.info("hey: waiting for user to close tha browser.")

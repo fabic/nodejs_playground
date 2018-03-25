@@ -330,7 +330,7 @@ Scrapper.prototype.scrapeZtDlProtect =
     const _startMsecs = Date.now()
 
     return new Promise(async (resolve, reject) => {
-      this.logger.info(`Scraping product page at ${url}`)
+      this.logger.info(`ZT: Scraping dl-protected link through ${url}`)
 
       if (this.browser == null)
         await this.launchBrowser()
@@ -376,12 +376,117 @@ Scrapper.prototype.scrapeZtDlProtect =
       .then((result) => {
         result._elaps = Math.round((Date.now() - _startMsecs) / 100) / 10
 
-        logger.info(`Scrapper done with '${result.href}, elaps: ${result._elaps} secs.'`)
+        logger.info(`ZT: Scrapper done with '${result.href}, elaps: ${result._elaps} secs.'`)
         logger.info(" \` - - -")
         logger.info("")
 
         return result
       })
   } // _scrapper_scrape_zt_dlprotect() //
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+/**
+ *
+ * @returns {Promise<{}>}
+ */
+Scrapper.prototype.scrapeZtPostPage =
+  function _scrapper_scrape_zt_post_page(url)
+  {
+    const _startMsecs = Date.now()
+
+    return new Promise(async (resolve, reject) => {
+      this.logger.info(`ZT: Scraping post at ${url}`)
+
+      if (this.browser == null)
+        await this.launchBrowser()
+
+      const pages = await this.browser.pages()
+      assert(pages.length > 0)
+      const page = pages[ pages.length - 1 ]
+
+      // page.setDefaultNavigationTimeout( 55*1000 )
+
+      await page.goto(url, {
+        timeout: 50*1000
+      } /* options */)
+
+      const result = await page.evaluate(async function _fetch_post_details() {
+        console.assert(this instanceof Window)
+
+        const _postinfo = document.querySelectorAll("div.postinfo")
+        const postinfo = _postinfo[0]
+
+        const results = []
+
+        const PIC = postinfo.children
+
+        for(const Child of PIC)
+        {
+          if (Child instanceof HTMLBRElement) {
+            continue
+          }
+
+          results.push({
+            label: Child.innerText.trim(),
+            links: Array.from(
+              Child.querySelectorAll("a[href^='http']"),
+              (anchor) => { return anchor.href })
+          })
+        }
+
+        return {
+          results:  results,
+          href:     document.location.href,
+          hasError: _postinfo.length !== 1 // no more than one div.postinfo
+                        || PIC.length < 3  // and div.postinfo shall have some elements.
+        }
+      }); // page.evaluate( _fetch_post_details() ) //
+
+      resolve(result)
+    }) // Promise() //
+      // Post-process results ;
+      // Compute the elapsed time.
+      .then((meta) => {
+        meta.releaseName = meta.results.shift().label
+
+        let sections = []
+        let section = {
+          name: "<< VOID >>",
+          links: []
+        }
+
+        for (let i = 0; i < meta.results.length; i++)
+        {
+          const item = meta.results[ i ]
+
+          assert(item.label !== '')
+
+          if (item.links.length < 1) {
+            if (section.links.length > 0)
+              sections.push( section )
+            section = {
+              name: item.label,
+              links: []
+            }
+          }
+          else {
+            section.links.push( item )
+          }
+        }
+
+        delete meta.results
+
+        meta.results = sections
+
+        meta._elaps = Math.round((Date.now() - _startMsecs) / 100) / 10
+
+        logger.info(`Scrapper done with '${meta.href}, elaps: ${meta._elaps} secs.'`)
+        logger.info(" \` - - -")
+        logger.info("")
+
+        return meta
+      })
+  } // _scrapper_scrape_zt_post_page() //
 
 // EOF //
