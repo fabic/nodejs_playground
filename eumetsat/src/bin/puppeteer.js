@@ -28,7 +28,8 @@ cli.parse({
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-if (cli.command === "hey") {
+if (cli.command === "hey")
+{
     cli.info("Hey! puppeteer!");
 
     logger.info("Default arguments: " + puppeteer.defaultArgs().join(' '));
@@ -86,8 +87,24 @@ if (cli.command === "hey") {
         logger.info("hey: done.")
       });
 }
-else if (cli.command === "huh") {
-    cli.info("Running `huh`")
+else if (cli.command === "huh")
+{
+    cli.info("Running `huh`");
+
+    (async () => {
+      let scrapper = new Scrapper()
+
+      if (true) {
+        let links = await scrapper.scrapeZtDlProtect('https://www.dl-protect1.com/1234556001234556021234556101234556150x9xd04kaitk')
+        console.log(links)
+      }
+
+      logger.info("hey: waiting for user to close tha browser.")
+      await scrapper.waitForBrowserDisconnect()
+    })()
+    .finally( async () => {
+      logger.info("hey: done.")
+    });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

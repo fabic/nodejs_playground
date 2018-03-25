@@ -241,7 +241,7 @@ Scrapper.prototype.scrapeLdlcProductPage =
       //   }
       // });
 
-      const result = await page.evaluate(async function _fetch_product_details() {
+      const result = await page.evaluate(function _fetch_product_details() {
         console.assert(this instanceof Window)
 
         const specs = Array.from(
@@ -315,5 +315,73 @@ Scrapper.prototype.scrapeLdlcProductPage =
         return result
       })
   } // _ldlcScrapper_scrape_procuct_page() //
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+/**
+ * ZT : Go through `https://www.dl-protect1.com/123456...`,
+ * hit “Continuer” and grab the link(s) to DDL sites.
+ *
+ * @returns {Promise<{}>}
+ */
+Scrapper.prototype.scrapeZtDlProtect =
+  function _scrapper_scrape_zt_dlprotect(url)
+  {
+    const _startMsecs = Date.now()
+
+    return new Promise(async (resolve, reject) => {
+      this.logger.info(`Scraping product page at ${url}`)
+
+      if (this.browser == null)
+        await this.launchBrowser()
+
+      const pages = await this.browser.pages()
+      assert(pages.length > 0)
+      const page = pages[ pages.length - 1 ]
+
+      await page.goto( url )
+
+      const [httpResponse] = await Promise.all([
+        page.waitForNavigation(/* waitOptions */ {}),
+        page.click("form > input[type=submit][value='Continuer']", /* clickOptions */ {}),
+      ])
+
+      const result = await page.evaluate(async function _fetch_ddl_links() {
+        console.assert(this instanceof Window)
+
+        const links = Array.from(
+          document.querySelectorAll(
+            "a[href^='http']"),
+          (anchor) => {
+            return anchor.href
+          })
+
+        const links2 = links.filter((href) => {
+          return href.startsWith( 'http://uptobox.com/')
+              || href.startsWith('https://uptobox.com/')
+              || href.startsWith( 'http://1fichier.com/')
+              || href.startsWith('https://1fichier.com/')
+        })
+
+        return {
+          links:    links2,
+          href:     document.location.href,
+          hasError: false
+        }
+      }); // page.evaluate() //
+
+      resolve(result)
+    }) // Promise() //
+      // Compute the elapsed time.
+      .then((result) => {
+        result._elaps = Math.round((Date.now() - _startMsecs) / 100) / 10
+
+        logger.info(`Scrapper done with '${result.href}, elaps: ${result._elaps} secs.'`)
+        logger.info(" \` - - -")
+        logger.info("")
+
+        return result
+      })
+  } // _scrapper_scrape_zt_dlprotect() //
 
 // EOF //
