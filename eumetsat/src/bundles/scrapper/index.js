@@ -428,7 +428,7 @@ Scrapper.prototype.scrapeZtPostPage =
           }
 
           results.push({
-            label: Child.innerText.trim(),
+            label: Child.innerText.toLowerCase().trim(),
             links: Array.from(
               Child.querySelectorAll("a[href^='http']"),
               (anchor) => { return anchor.href })

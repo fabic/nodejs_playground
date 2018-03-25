@@ -103,6 +103,26 @@ else if (cli.command === "huh")
       if (true) {
         let results = await scrapper.scrapeZtPostPage(
           'https://ww1.zone-telechargement1.com/3105-game-of-thrones-saison-3-french-hd720.html')
+          .then(async (meta) => {
+            logger.info(`\` Release: ${meta.relaseName}`)
+            for(const section of meta.results) {
+              if (section.name === 'uptobox' || section.name === '1fichier') {
+                logger.info(` \` Processing section ${section.name}`)
+                for(const link of section.links) {
+                  logger.info(`   \` - ${link.label} : ${link.links.join(' ; ')}`)
+                  for (const lnk of link.links) {
+                    const meta = await scrapper.scrapeZtDlProtect(lnk)
+                    logger.info(`   \` - ${link.label} : ${meta.links.join(' ; ')}`)
+                  }
+                }
+              }
+              else {
+                logger.info(` \` Skipping section ${section.name}`)
+              }
+            }
+
+            return 'TODO'
+          })
         console.log(results)
       }
 
