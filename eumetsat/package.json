@@ -11,7 +11,7 @@
     "start": "npm run build & node --harmony --harmony_promise_finally $NODE_DEBUG_OPTION dist/app.js",
     "dev": "babel-node $NODE_DEBUG_OPTION src/app.js",
     "eumetsat": "babel-node $NODE_DEBUG_OPTION src/bin/eumetsat.js",
-    "scraper": "babel-node $NODE_DEBUG_OPTION src/bin/puppeteer.js",
+    "scraper": "babel-node $NODE_DEBUG_OPTION src/bin/scrapper.js",
     "dev1": "nodemon -V --watch src/ --exec bin/babel-node $NODE_DEBUG_OPTION src/app.js",
     "dev2": "watch --wait=1 'bin/babel src/ -d dist/' ./src/ & nodemon --harmony --harmony_promise_finally $NODE_DEBUG_OPTION ./dist/app.js"
   },

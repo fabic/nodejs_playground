@@ -32,6 +32,8 @@ export default class Scrapper
    * @returns {Promise<Puppeteer.Browser>}
    */
   launchBrowser() {
+    this.logger.info("Default Chrom-e/ium arguments: " + puppeteer.defaultArgs().join(' '));
+
     return puppeteer.launch({
         headless: false,
         executablePath: '/usr/bin/google-chrome-unstable',
@@ -40,10 +42,27 @@ export default class Scrapper
         dumpio: true,
         devtools: false,
       })
+      // Assign this.browser
       .then((browser) => {
         this.logger.info("We got a browser launched.")
+
         assert(this.browser == null)
         this.browser = browser
+
+        return browser
+      })
+      // Set up default open pages viewport.
+      .then(async (browser) => {
+        this.logger.info("We got a browser launched.")
+
+        const pages = await this.browser.pages()
+        assert(pages.length > 0)
+
+        for(const page of pages) {
+          await page.setViewport({width: 1280, height: 1024})
+          await page.goto( "http://localhost:3333" ) // fixme: temp.
+        }
+
         return browser
       })
   }

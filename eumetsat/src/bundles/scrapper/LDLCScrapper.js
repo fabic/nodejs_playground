@@ -29,7 +29,7 @@ export default class LDLCScrapper extends ScrapperBase
    *
    * @returns {Promise<[]>}
    */
-  scrapeLdlcProductsList(url)
+  scrapeProductsList(url)
   {
     return new Promise(async (resolve, reject) => {
       if (this.browser == null)
@@ -125,7 +125,7 @@ export default class LDLCScrapper extends ScrapperBase
         return retv
       })
 
-  } // scrapeLdlcProductsList() //
+  } // scrapeProductsList() //
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
