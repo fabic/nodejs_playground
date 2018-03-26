@@ -25,7 +25,64 @@ export default class LDLCScrapper extends ScrapperBase
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   /**
-   * Scrape products list page.
+   * TODO: WIP: may or may not navigate the site so as to reach page products list.
+   *
+   * @returns {Promise<[]>}
+   */
+  navigateFrontpage()
+  {
+    return new Promise(async (resolve, reject) => {
+      if (this.browser == null)
+        await this.launchBrowser()
+
+      const page = await this.browser.newPage()
+      await page.setViewport({width: 1280, height: 1024})
+      await page.goto("https://www.ldlc.com/")
+
+      const results = await page.evaluate(function _navigate_front_page() {
+        console.assert(this instanceof Window)
+
+        const categories = Array.from(
+          document.querySelectorAll("#header ul.tabs > li a.catName"),
+          (anchor) => {
+            return {
+               href: anchor.href,
+              label: anchor.innerText
+            }
+          })
+
+        return {
+          categories,
+          href:        document.location.href,
+          hasError:    false
+        }
+      }); // page.evaluate( _navigate_front_page() ) //
+
+
+      //await page.click("a.pagerNextItem[rel=next]")
+      // ^ https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md#pageclickselector-options
+      //   The correct pattern for click'n'wait :
+      // const nextPageSelectorStr = "a.pagerNextItem[rel=next]";
+      // const [httpResponse] = await Promise.all([
+      //   page.waitForNavigation(/* waitOptions */ {}),
+      //   page.click(nextPageSelectorStr, /* clickOptions */ {}),
+      // ]);
+
+      logger.info(" \` - - -")
+      logger.info("")
+
+      resolve(results)
+    }) // Promise() //
+    // Normalize results into one flat array.
+      .then((results) => {
+        logger.info(" \` done frontpage navigation.")
+        return results
+      })
+
+  }  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  /**
+   * Scrape a products list page.
    *
    * @returns {Promise<[]>}
    */

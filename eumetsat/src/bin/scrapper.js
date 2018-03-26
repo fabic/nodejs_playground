@@ -71,9 +71,14 @@ import Config from '../../config'
         })
     }
 
-    if (true) {
+    if (false) {
       let details = await scrapper.scrapeProductPage('https://www.ldlc.com/fiche/PB00242064.html')
       console.log(details)
+    }
+
+    if (true) {
+      const results = await scrapper.navigateFrontpage()
+      console.log(results)
     }
 
     logger.info("hey: waiting for user to close tha browser.")
@@ -92,7 +97,7 @@ import Config from '../../config'
       console.log(links)
     }
 
-    if (true) {
+    if (false) {
       let results = await scrapper.scrapePostPage(
         'https://ww1.zone-telechargement1.com/3105-game-of-thrones-saison-3-french-hd720.html')
         .then(async (meta) => {
