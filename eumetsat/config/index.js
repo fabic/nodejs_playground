@@ -18,7 +18,17 @@ let Config = {
 
   EUMetSat: {
     images_dir: path.join(__dirname, '../public/EUMetSat/'),
-    launch_fetch_jobs: true
+    launch_fetch_jobs: false
+  },
+
+  // For class DB @ `src/bundles/db/index.js`.
+  database: {
+       host: 'localhost',
+       port: 27017,
+         db: 'fabi',
+       user: 'fabi',
+       pass: 'haiku',
+    options: {} // todo: options handling not impl.
   }
 }
 

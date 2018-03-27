@@ -11,15 +11,15 @@ import    logger from '../../misc/logger'
 import    assert from 'assert'
 import puppeteer from 'puppeteer'
 import         _ from 'lodash'
-
+import { Db as MongoDb } from 'mongodb'
 
 /**
  * LDLC.Fr scrapper
  */
 export default class LDLCScrapper extends ScrapperBase
 {
-  constructor() {
-    super()
+  constructor(db : MongoDb) {
+    super(db)
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -99,7 +99,7 @@ export default class LDLCScrapper extends ScrapperBase
       let allResults = []
 
       let       iterCount = 1
-      const maxIterations = 2
+      const maxIterations = 1
 
       while (true) {
         logger.info(`~~> ITERATION #${iterCount}`)
@@ -147,7 +147,7 @@ export default class LDLCScrapper extends ScrapperBase
 
         logger.info(` \`~~> NEXT ITERATION (${iterCount})`)
 
-        await do_pause_for_a_while(200 + Math.floor(Math.random() * 300))
+        await sleep(200 + Math.floor(Math.random() * 300))
 
         //await page.click("a.pagerNextItem[rel=next]")
         // ^ https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md#pageclickselector-options
@@ -180,6 +180,15 @@ export default class LDLCScrapper extends ScrapperBase
           retv.push(...obj.articles)
         }
         return retv
+      })
+      .then((results) => {
+        logger.info("Now baking collected products list.")
+        this.db.collection('LdlcProductsList').insertMany( results )
+          .then((res) => {
+            logger.info("Allo?")
+            console.log(typeof res)
+          })
+        logger.info("Done baking products list.")
       })
 
   } // scrapeProductsList() //

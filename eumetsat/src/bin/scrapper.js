@@ -6,13 +6,14 @@
 
 import { LDLCScrapper, ZTScrapper } from '../bundles/scrapper'
 
-import assert from "assert"
-import    cli from "cli"
+import assert from 'assert'
+import    cli from 'cli'
 
 import     Sleep from "../misc/sleep";
 import    logger from '../misc/logger'
 import puppeteer from 'puppeteer'
 
+import     DB from '../bundles/db'
 import Config from '../../config'
 
 
@@ -26,14 +27,16 @@ import Config from '../../config'
     work: [ false, 'What kind of work to do', 'string', 'sleep' ],
   }, ['ldlc', 'zt'])
 
+  const dba = new DB(Config.database)
+  await dba.connect()
 
   if (cli.command === "ldlc")
   {
     cli.info("Hey! Running 'ldlc' !");
 
-    let scrapper = new LDLCScrapper()
+    let scrapper = new LDLCScrapper(dba.db('fabi'))
 
-    if (false) {
+    if (true) {
       await scrapper.scrapeProductsList('https://www.ldlc.com/informatique/pieces-informatique/carte-mere/c4293/')
         .then((result) => {
           logger.info("hey: done, got our motherboards.")
@@ -76,7 +79,7 @@ import Config from '../../config'
       console.log(details)
     }
 
-    if (true) {
+    if (false) {
       const results = await scrapper.navigateFrontpage()
       console.log(results)
     }
@@ -126,6 +129,9 @@ import Config from '../../config'
     logger.info("zt: waiting for user to close tha browser.")
     await scrapper.waitForBrowserDisconnect()
   } // cli command 'zt' //
+
+  logger.info("hey: about to close database connection.")
+  await dba.closeConnection()
 })() // anonymous async IIFE //
   .finally( async () => {
     await Sleep(100, `EOS: Command was ${cli.command}    [${__filename}]`)

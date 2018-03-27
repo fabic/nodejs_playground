@@ -9,18 +9,22 @@ import    logger from '../../misc/logger'
 import    assert from 'assert'
 import puppeteer from 'puppeteer'
 import         _ from 'lodash'
+import {Db as MongoDb} from "mongodb";
 
 
 /**
  * Base class providing common features for scrapping stuff out there.
+ *
+ * todo: scrape kimsufi.com ?
  */
 export default class Scrapper
 {
   /**
    * Ctor.
    */
-  constructor() {
-    this.logger = logger
+  constructor(db : MongoDb) {
+    this.db      = db
+    this.logger  = logger
     this.browser = null
   }
 
@@ -60,7 +64,7 @@ export default class Scrapper
 
         for(const page of pages) {
           await page.setViewport({width: 1280, height: 1024})
-          await page.goto( "http://localhost:3333" ) // fixme: temp.
+          // await page.goto( "http://localhost:3333" ) // fixme: temp.
         }
 
         return browser
