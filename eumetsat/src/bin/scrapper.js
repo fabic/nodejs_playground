@@ -4,7 +4,7 @@
 
 'use strict'
 
-import { LDLCScrapper, ZTScrapper } from '../bundles/scrapper'
+import { LDLCScrapper, WatchSeriesScrapper, ZTScrapper } from '../bundles/scrapper'
 
 import assert from 'assert'
 import    cli from 'cli'
@@ -25,7 +25,7 @@ import Config from '../../config'
     file: [ 'f', 'A file to process', 'file', null ],
     time: [ 't', 'An access time', 'time', false],
     work: [ false, 'What kind of work to do', 'string', 'sleep' ],
-  }, ['ldlc', 'zt'])
+  }, ['ldlc', 'zt', 'wsk'])
 
   const dba = new DB(Config.database)
   await dba.connect()
@@ -130,7 +130,22 @@ import Config from '../../config'
     await scrapper.waitForBrowserDisconnect()
   } // cli command 'zt' //
 
-  logger.info("hey: about to close database connection.")
+  else if (cli.command == 'wsk') {
+    cli.info("Hey! Running 'wsk' (watch-series.sk scrapper) !");
+
+    let scrapper = new WatchSeriesScrapper(dba.db('fabi'))
+
+    if (true) {
+      let result = await scrapper.scrapeTvShowPage(
+        'http://watchseries.sk/series/star-trek-voyager/season/6/episode/14')
+      console.log(result)
+    }
+
+    logger.info("wsk: waiting for user to close tha browser.")
+    await scrapper.waitForBrowserDisconnect()
+  } // cli command 'wsk' //
+
+  logger.info("wsk: Now closing database connection.")
   await dba.closeConnection()
 })() // anonymous async IIFE //
   .finally( async () => {

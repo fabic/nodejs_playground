@@ -99,7 +99,7 @@ export default class LDLCScrapper extends ScrapperBase
       let allResults = []
 
       let       iterCount = 1
-      const maxIterations = 1
+      const maxIterations = 2
 
       while (true) {
         logger.info(`~~> ITERATION #${iterCount}`)
@@ -107,12 +107,20 @@ export default class LDLCScrapper extends ScrapperBase
         const result = await page.evaluate(function _fetch_articles() {
           console.assert(this instanceof Window)
 
+          // document.querySelectorAll("a.nom[href^='https://www.ldlc.com/fiche/']")[0]
+          //   .parentNode   // TD
+          //     .parentNode // TR
+          //       .querySelectorAll('td.prix')[0].innerText
+
           let articles = Array.from(
             document.querySelectorAll("a.nom[href^='https://www.ldlc.com/fiche/']"),
             (a) => {
+              const parent_tr = a.parentNode.parentNode
+              console.assert(parent_tr instanceof HTMLTableRowElement)
               return {
                  href: a.href,
-                title: a.title
+                title: a.title,
+                price: parent_tr.querySelector('td.prix').innerText.trim()
               }
             })
 
@@ -147,7 +155,7 @@ export default class LDLCScrapper extends ScrapperBase
 
         logger.info(` \`~~> NEXT ITERATION (${iterCount})`)
 
-        await sleep(200 + Math.floor(Math.random() * 300))
+        await sleep(800 + Math.floor(Math.random() * 1200))
 
         //await page.click("a.pagerNextItem[rel=next]")
         // ^ https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md#pageclickselector-options
