@@ -14,7 +14,8 @@
     "dev2": "watch --wait=1 'bin/babel src/ -d dist/' ./src/ & nodemon --harmony --harmony_promise_finally $NODE_DEBUG_OPTION ./dist/app.js",
     "eumetsat": "babel-node $NODE_DEBUG_OPTION src/bin/eumetsat.js",
     "scraper": "babel-node $NODE_DEBUG_OPTION src/bin/scrapper.js",
-    "db": "babel-node $NODE_DEBUG_OPTION src/bin/db.js"
+    "db": "babel-node $NODE_DEBUG_OPTION src/bin/db.js",
+    "godaddy": "babel-node $NODE_DEBUG_OPTION src/bin/godaddy-dns.js"
   },
   "dependencies": {
     "body-parser": "^1.18.2",
