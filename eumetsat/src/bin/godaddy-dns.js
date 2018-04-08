@@ -136,7 +136,7 @@ class Godaddy
       request.on('error', (e) => {
         this.logger.error(` \` Problem with request: ${e.message}  [EUMetSat.probeResourceAt()]`);
         reject(e)
-      });
+      })
 
       if (body) {
         this.logger.info(`Sending body (${body.length} bytes): ${body}`)

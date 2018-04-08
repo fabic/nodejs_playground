@@ -40,6 +40,7 @@ export default class WatchSeriesScrapper extends ScrapperBase
       const page = await this.browser.newPage()
       await page.setViewport({width: 1366, height: 768})
 
+      // We'll collect URL(s)
       await page.setRequestInterception(true);
 
       let requestsList = []
@@ -52,22 +53,43 @@ export default class WatchSeriesScrapper extends ScrapperBase
         request.continue();
       });
 
+      await page.evaluateOnNewDocument(() => {
+        console.assert(this instanceof Window)
+        const iframes = Array.from(
+          document.querySelectorAll("iframe"),
+          (iframe) => {
+            return {
+                  src: iframe.src,
+              dataSrc: iframe.getAttribute('data-src')
+            }
+          })
+        iframes.forEach((item) => {
+          console.log(`» src: ${item.src}, data-src: ${item.dataSrc}`)
+        })
+
+        huh = iframes
+      })
+
+
       let httpResponse = await page.goto( url )
 
-      this.logger.info("~~> 1st click")
+      const doClickAround = true;
+      if (doClickAround) {
+        this.logger.info("~~> 1st click")
 
-      let [httpResponse2] = await Promise.all([
-        page.waitForNavigation(/* waitOptions */ {}),
-        page.click("div#player.jwplayer", /* clickOptions */ {}),
-      ]);
+        let [httpResponse2] = await Promise.all([
+          page.waitForNavigation(/* waitOptions */ {}),
+          page.click("div#player.jwplayer", /* clickOptions */ {}),
+        ]);
 
-      await sleep(300 + Math.floor(Math.random() * 700))
+        await sleep(300 + Math.floor(Math.random() * 700))
 
-      this.logger.info("~~> 2nd click")
-      let [httpResponse3] = await Promise.all([
-        page.waitForNavigation(/* waitOptions */ {}),
-        page.click("div#player.jwplayer", /* clickOptions */ {}),
-      ]);
+        this.logger.info("~~> 2nd click")
+        let [httpResponse3] = await Promise.all([
+          page.waitForNavigation(/* waitOptions */ {}),
+          page.click("div#player.jwplayer", /* clickOptions */ {}),
+        ]);
+      }
 
       // Inject Lodash - https://lodash.com/
       // await page.addScriptTag({
