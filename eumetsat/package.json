@@ -15,7 +15,8 @@
     "eumetsat": "babel-node $NODE_DEBUG_OPTION src/bin/eumetsat.js",
     "scraper": "babel-node $NODE_DEBUG_OPTION src/bin/scrapper.js",
     "db": "babel-node $NODE_DEBUG_OPTION src/bin/db.js",
-    "godaddy": "babel-node $NODE_DEBUG_OPTION src/bin/godaddy-dns.js"
+    "godaddy": "babel-node $NODE_DEBUG_OPTION src/bin/godaddy-dns.js",
+    "avahi": "babel-node $NODE_DEBUG_OPTION src/bin/avahi.js"
   },
   "dependencies": {
     "body-parser": "^1.18.2",
@@ -26,6 +27,7 @@
     "compression": "^1.7.2",
     "cookie-parser": "^1.4.3",
     "cors": "^2.8.4",
+    "dbus-as-promised": "^0.1.1",
     "debug": "^2.6.9",
     "express": "^4.16.3",
     "helmet": "^3.12.0",
