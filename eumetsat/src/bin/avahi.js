@@ -17,6 +17,8 @@ cli.parse({
 
 if (cli.command === 'publish') {
 
+  const avahi = new Avahi()
+  avahi.publish('dude.local')
 
 }
 
