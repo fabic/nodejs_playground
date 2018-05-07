@@ -7,3 +7,6 @@
 [submodule "react-redux-universal-hot-example"]
 	path = react-redux-universal-hot-example
 	url = git@github.com:bertho-zero/react-redux-universal-hot-example.git
+[submodule "avahi-js-fork"]
+	path = avahi-js
+	url = git@gist.github.com:b78bbcdee0461cc7a078192e3b6da4e3.git
